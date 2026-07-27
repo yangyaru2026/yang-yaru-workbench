@@ -1091,6 +1091,15 @@
       </div>
     </div>
 
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+        我的自选（ETF+个股）
+      </div>
+      <div id="watchList"></div>
+      <button class="btn btn-outline btn-sm" id="refreshWatch" style="margin-top:10px;width:100%">🔄 刷新自选行情</button>
+    </div>
+
     <div class="stock-tip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span>数据来源于东方财富，仅供学习参考，<strong>不构成投资建议</strong>。股市有风险，投资需谨慎。主力资金净流入为正且涨幅适中，可能是潜力股信号。</span>
@@ -2309,7 +2318,112 @@ function renderStock(){
   if(document.getElementById('stockList').children.length === 0){
     fetchStock();
   }
+  renderWatchList();
 }
+
+// ===== 自选股监控 =====
+const WATCH_LIST = [
+  {code:'512480', name:'半导体ETF', market:'1', buyPrice:1.124, shares:2600, cost:2922.4, note:'推荐买入'},
+  {code:'159995', name:'芯片ETF', market:'0', buyPrice:null, shares:0, cost:0, note:'备选'},
+  {code:'002384', name:'东山精密', market:'0', buyPrice:null, shares:0, cost:0, note:'潜力股关注'},
+  {code:'300750', name:'宁德时代', market:'0', buyPrice:null, shares:0, cost:0, note:'潜力股关注'},
+  {code:'600667', name:'太极实业', market:'1', buyPrice:null, shares:0, cost:0, note:'主力流入9.47亿'},
+  {code:'000636', name:'风华高科', market:'0', buyPrice:null, shares:0, cost:0, note:'主力流入9.93亿'},
+  {code:'002094', name:'青岛金王', market:'0', buyPrice:9.465, shares:200, cost:1893, note:'当前持仓·亏损中'}
+];
+
+async function fetchWatchList(){
+  const el = document.getElementById('watchList');
+  el.innerHTML = '<div class="hot-loading" style="padding:20px 0"><div class="spinner"></div>正在获取自选行情...</div>';
+
+  // 批量获取行情（东方财富批量接口）
+  const secids = WATCH_LIST.map(s => `${s.market}.${s.code}`).join(',');
+  const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f1,f2,f3,f4,f6,f12,f14&secids=${secids}&_t=${Date.now()}`;
+
+  try{
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if(data.data && data.data.diff){
+      renderWatchList(data.data.diff);
+    }else{
+      throw new Error('无数据');
+    }
+  }catch(e){
+    // 降级：使用预置数据
+    renderWatchList(WATCH_FALLBACK);
+  }
+}
+
+function renderWatchList(list){
+  const el = document.getElementById('watchList');
+  if(!list || list.length===0){
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-mute);font-size:13px">暂无数据</div>';
+    return;
+  }
+
+  // 合并自选配置和实时数据
+  el.innerHTML = WATCH_LIST.map(w=>{
+    // 从实时数据中找到对应的股票
+    const realtime = list.find(s => (s.f12===w.code) || (s.code===w.code));
+    const price = realtime ? (realtime.f2 || realtime.price || 0) : (w.buyPrice || 0);
+    const pct = realtime ? (realtime.f3 || realtime.pct || 0) : 0;
+    const isUp = pct >= 0;
+    const pctStr = (isUp?'+':'') + pct.toFixed(2) + '%';
+
+    // 计算盈亏
+    let pnlStr = '';
+    let pnlClass = '';
+    if(w.buyPrice && w.shares > 0 && price > 0){
+      const pnl = (price - w.buyPrice) * w.shares;
+      const pnlPct = (price - w.buyPrice) / w.buyPrice * 100;
+      pnlStr = `${pnl>=0?'+':''}${pnl.toFixed(2)}元 (${pnlPct>=0?'+':''}${pnlPct.toFixed(2)}%)`;
+      pnlClass = pnl >= 0 ? 'up' : 'down';
+    }
+
+    // 买入建议
+    let actionTag = '';
+    if(w.note.includes('推荐买入')){
+      actionTag = '<span class="analysis-tag buy">⭐ 建议买入</span>';
+    } else if(w.note.includes('亏损')){
+      actionTag = '<span class="analysis-tag risk">⚠️ 建议止损</span>';
+    } else if(w.note.includes('备选')){
+      actionTag = '<span class="analysis-tag watch">备选</span>';
+    } else {
+      actionTag = '<span class="analysis-tag watch">关注中</span>';
+    }
+
+    return `
+      <div class="stock-item" style="padding:10px 0">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:14px;font-weight:600">${w.name}</span>
+            <span style="font-size:11px;color:var(--text-mute)">${w.code}</span>
+            ${actionTag}
+          </div>
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:2px">${w.note}</div>
+          ${pnlStr ? `<div style="font-size:12px;font-weight:600" class="stock-pct ${pnlClass}">盈亏：${pnlStr}</div>` : ''}
+        </div>
+        <div class="stock-price">
+          <div class="stock-change ${isUp?'up':'down'}" style="font-size:15px">${price.toFixed(3)}</div>
+          <div class="stock-pct ${isUp?'up':'down'}">${pctStr}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('refreshWatch').addEventListener('click', fetchWatchList);
+
+// 自选股预置数据（API不可用时降级）
+const WATCH_FALLBACK = [
+  {f12:'512480', f14:'半导体ETF', f2:1.124, f3:0.99},
+  {f12:'159995', f14:'芯片ETF', f2:1.245, f3:1.23},
+  {f12:'002384', f14:'东山精密', f2:211.90, f3:6.39},
+  {f12:'300750', f14:'宁德时代', f2:400.00, f3:4.44},
+  {f12:'600667', f14:'太极实业', f2:17.92, f3:10.01},
+  {f12:'000636', f14:'风华高科', f2:44.24, f3:10.00},
+  {f12:'002094', f14:'青岛金王', f2:4.35, f3:-0.68}
+];
 
 // ===== 爆款分析室 =====
 let viralPlatform = 'douyin';
