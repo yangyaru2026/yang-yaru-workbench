@@ -638,6 +638,18 @@
   .stock-summary .ss-title{font-size:13px;opacity:.85;margin-bottom:4px}
   .stock-summary .ss-count{font-size:28px;font-weight:700}
   .stock-summary .ss-sub{font-size:12px;opacity:.75;margin-top:4px}
+  .stock-fund-flow{
+    background:linear-gradient(135deg,#27ae60 0%,#16a085 100%);
+    border-radius:var(--radius);
+    padding:14px;
+    color:#fff;
+    margin-bottom:14px;
+  }
+  .stock-fund-flow .ff-title{font-size:12px;opacity:.85;margin-bottom:8px}
+  .stock-fund-flow .ff-list{display:flex;flex-direction:column;gap:6px}
+  .stock-fund-flow .ff-item{display:flex;justify-content:space-between;font-size:13px}
+  .stock-fund-flow .ff-item .lbl{opacity:.85}
+  .stock-fund-flow .ff-item .val{font-weight:600}
   .stock-item{
     display:flex;align-items:center;gap:12px;
     padding:12px 0;
@@ -690,6 +702,63 @@
   .analysis-tag.buy{background:#fdecea;color:#e74c3c}
   .analysis-tag.watch{background:#fff3e0;color:#e65100}
   .analysis-tag.risk{background:#fafafa;color:#999}
+
+  /* ===== 爆款分析室 ===== */
+  .viral-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    margin-bottom:14px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .viral-header{
+    padding:14px 16px;
+    background:linear-gradient(135deg,#6b7a4b 0%,#8a9a6a 100%);
+    color:#fff;
+    display:flex;align-items:center;gap:10px;
+  }
+  .viral-rank{
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(255,255,255,.2);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:14px;flex-shrink:0;
+  }
+  .viral-title{font-size:14px;font-weight:600;flex:1;line-height:1.4}
+  .viral-heat{font-size:11px;opacity:.85;margin-top:2px}
+  .viral-body{padding:14px 16px}
+  .viral-section{margin-bottom:12px}
+  .viral-section:last-child{margin-bottom:0}
+  .viral-section-title{
+    font-size:12px;font-weight:600;color:var(--olive-dark);
+    margin-bottom:6px;display:flex;align-items:center;gap:6px;
+  }
+  .viral-section-title .icon{
+    width:18px;height:18px;border-radius:4px;
+    background:var(--olive-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;
+  }
+  .viral-section-content{
+    font-size:13px;line-height:1.6;color:var(--text);
+    background:var(--olive-bg);
+    padding:10px 12px;
+    border-radius:8px;
+  }
+  .viral-section-content.idea{
+    background:#fff8e1;
+    border-left:3px solid var(--accent);
+  }
+  .viral-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .viral-tag{
+    font-size:10px;padding:2px 8px;
+    border-radius:10px;
+    background:var(--olive-soft);color:var(--olive-dark);
+  }
+  .viral-actions{
+    display:flex;gap:8px;
+    padding:0 16px 14px;
+  }
+  .viral-actions .btn{flex:1;font-size:12px;padding:8px}
 </style>
 </head>
 <body>
@@ -745,6 +814,10 @@
     <div class="nav-item" data-page="stock">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
       <span>股票雷达</span>
+    </div>
+    <div class="nav-item" data-page="viral">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2s4 4 4 8a4 4 0 01-8 0c0-2 1-3 1-3s-3 2-3 6a6 6 0 0012 0c0-6-6-11-6-11z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>爆款分析室</span>
     </div>
     <div class="nav-item" data-page="settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -1011,9 +1084,16 @@
       <div class="ss-sub" id="stockUpdateTime">数据加载中...</div>
     </div>
 
+    <div class="stock-fund-flow" id="fundFlowCard">
+      <div class="ff-title">💰 主力资金净流入 TOP5（潜力股信号）</div>
+      <div class="ff-list" id="fundFlowList">
+        <div class="ff-item"><span class="lbl">加载中...</span></div>
+      </div>
+    </div>
+
     <div class="stock-tip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>数据来源于东方财富，仅供学习参考，<strong>不构成投资建议</strong>。股市有风险，投资需谨慎。</span>
+      <span>数据来源于东方财富，仅供学习参考，<strong>不构成投资建议</strong>。股市有风险，投资需谨慎。主力资金净流入为正且涨幅适中，可能是潜力股信号。</span>
     </div>
 
     <div class="hot-refresh" style="margin-bottom:10px">
@@ -1026,9 +1106,32 @@
         <div class="type-tab active" data-stype="hot">涨幅榜</div>
         <div class="type-tab" data-stype="popular">人气榜</div>
         <div class="type-tab" data-stype="rise">连涨股</div>
+        <div class="type-tab" data-stype="potential">潜力股</div>
       </div>
       <div id="stockList"></div>
     </div>
+  </div>
+
+  <!-- ===== 爆款分析室 ===== -->
+  <div class="page" id="page-viral">
+    <div class="hero" style="background:linear-gradient(135deg,#6b7a4b 0%,#d4a574 100%)">
+      <div class="greeting">🎬 爆款分析室</div>
+      <div class="name">每日热点 × 爆火拆解 × 原创思路</div>
+      <div class="quote">分析别人为什么火，不如思考自己怎么火</div>
+    </div>
+
+    <div class="hot-refresh" style="margin-bottom:10px">
+      <div style="font-size:16px;font-weight:600">🔥 今日抖音爆款</div>
+      <button class="btn btn-sm btn-outline" id="refreshViral">刷新</button>
+    </div>
+    <div class="hot-update-time" id="viralUpdateTime" style="margin-bottom:14px">加载中...</div>
+
+    <div class="type-tabs" id="viralPlatformTabs" style="margin-bottom:14px">
+      <div class="type-tab active" data-platform="douyin">抖音</div>
+      <div class="type-tab" data-platform="xhs">小红书</div>
+    </div>
+
+    <div id="viralList"></div>
   </div>
 
   <!-- ===== 设置页 ===== -->
@@ -1160,11 +1263,11 @@ function toast(msg){
 }
 
 // ===== 页面导航 =====
-const pages = ['home','book','hot','study','wrong','fav','create','stock','settings'];
+const pages = ['home','book','hot','study','wrong','fav','create','stock','viral','settings'];
 const pageTitles = {
   home:'杨亚茹工作台', book:'记一笔', hot:'抖音热点',
   study:'备考学习', wrong:'错题本', fav:'我的收藏',
-  create:'创作工作台', stock:'股票雷达', settings:'设置'
+  create:'创作工作台', stock:'股票雷达', viral:'爆款分析室', settings:'设置'
 };
 let currentPage = 'home';
 
@@ -1191,6 +1294,7 @@ function navigate(page, action){
   if(page==='fav') renderFav();
   if(page==='create') renderCreate();
   if(page==='stock') renderStock();
+  if(page==='viral') renderViral();
   if(page==='settings') renderSettings();
 
   // 快捷入口动作
@@ -2027,57 +2131,115 @@ function renderCreate(){
 
 // ===== 股票雷达 =====
 let stockType = 'hot';
+let stockCache = { hot:[], popular:[], rise:[], fundFlow:[] };
+
 async function fetchStock(){
   const el = document.getElementById('stockList');
   el.innerHTML = '<div class="hot-loading"><div class="spinner"></div>正在获取实时行情...</div>';
   document.getElementById('stockUpdateTime').textContent = '加载中...';
 
-  // 东方财富实时行情API（免费，无需认证）
   const urls = {
-    hot: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
-    popular: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f10&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
-    rise: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f4&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17'
+    hot: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=15&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
+    popular: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=15&po=1&np=1&fltt=2&invt=2&fid=f10&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
+    rise: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=15&po=1&np=1&fltt=2&invt=2&fid=f4&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
+    potential: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17,f62,f184,f66'
   };
 
   try{
     const resp = await fetch(urls[stockType] + '&_t=' + Date.now());
     const data = await resp.json();
     if(data.data && data.data.diff && data.data.diff.length>0){
+      stockCache[stockType] = data.data.diff;
       renderStockList(data.data.diff);
       const now = new Date();
       document.getElementById('stockUpdateTime').textContent = '更新于 ' + now.toLocaleTimeString('zh-CN');
       document.getElementById('stockTopCount').textContent = data.data.diff.length + ' 只';
       toast('行情更新成功 ✓');
+      // 同时拉取资金流向
+      if(stockType === 'hot') fetchFundFlow();
     }else{
       throw new Error('无数据');
     }
   }catch(e){
-    // 降级：使用预置数据
+    stockCache[stockType] = FALLBACK_STOCK;
     renderStockList(FALLBACK_STOCK);
+    renderFundFlow(FALLBACK_FUND_FLOW);
     document.getElementById('stockUpdateTime').textContent = '使用缓存数据（网络受限）';
     document.getElementById('stockTopCount').textContent = '10 只';
     toast('使用缓存数据');
   }
 }
 
+async function fetchFundFlow(){
+  try{
+    const url = 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f12,f14,f62,f184,f66';
+    const resp = await fetch(url + '&_t=' + Date.now());
+    const data = await resp.json();
+    if(data.data && data.data.diff){
+      stockCache.fundFlow = data.data.diff;
+      renderFundFlow(data.data.diff);
+    }
+  }catch(e){
+    renderFundFlow(FALLBACK_FUND_FLOW);
+  }
+}
+
+function renderFundFlow(list){
+  const el = document.getElementById('fundFlowList');
+  if(!list || list.length===0){
+    el.innerHTML = '<div class="ff-item"><span class="lbl">暂无数据</span></div>';
+    return;
+  }
+  el.innerHTML = list.slice(0,5).map(s=>{
+    const name = s.f14 || s.name || '--';
+    const flow = s.f62 || 0;
+    const flowStr = (flow>=100000000 ? '净流入 ' + (flow/100000000).toFixed(2) + '亿' :
+                    flow>=10000 ? '净流入 ' + (flow/10000).toFixed(0) + '万' :
+                    '净流入 ' + (flow/1).toFixed(0) + '元');
+    const pct = s.f3 || 0;
+    return `
+      <div class="ff-item" onclick="showStockDetail('${s.f12}','${name}',${s.f2||0},${pct},${s.f4||0})">
+        <span class="lbl">${name} <span style="opacity:.6">(${s.f12})</span></span>
+        <span class="val">${flowStr} · ${pct>=0?'+':''}${pct.toFixed(2)}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderStockList(list){
   const el = document.getElementById('stockList');
   const colors = ['#e74c3c','#e67e22','#f39c12','#27ae60','#3498db','#9b59b6','#1abc9c','#34495e','#e74c3c','#e67e22'];
-  el.innerHTML = list.map((s,i)=>{
+
+  // 潜力股模式：筛选主力净流入为正 + 涨幅2-7%（温和上涨）
+  let displayList = list;
+  if(stockType === 'potential'){
+    displayList = list.filter(s=>{
+      const pct = s.f3 || 0;
+      const flow = s.f62 || 0;
+      return pct >= 2 && pct <= 8 && flow > 0;
+    }).slice(0, 10);
+    if(displayList.length === 0) displayList = list.slice(0, 10);
+  }
+
+  el.innerHTML = displayList.map((s,i)=>{
     const name = s.f14 || s.name;
     const code = s.f12 || s.code;
     const price = s.f2 || s.price;
     const pct = s.f3 || s.pct;
     const change = s.f4 || s.change;
     const volume = s.f5 || s.volume;
+    const flow = s.f62 || 0;
     const isUp = pct >= 0;
     const pctStr = (isUp?'+':'') + pct.toFixed(2) + '%';
     const changeStr = (isUp?'+':'') + change.toFixed(2);
-    // 简单技术面分析
+
+    // 技术面分析
     let analysis = '';
     let tag = '';
     if(pct >= 9.8){ analysis = '涨停板，注意次日分化风险'; tag = 'risk'; }
+    else if(pct >= 5 && flow > 0){ analysis = '🔥强势上涨+主力流入，潜力信号'; tag = 'buy'; }
     else if(pct >= 5){ analysis = '强势上涨，关注量能持续性'; tag = 'buy'; }
+    else if(pct >= 2 && flow > 0){ analysis = '⭐主力净流入，温和上涨，潜力股'; tag = 'buy'; }
     else if(pct >= 2){ analysis = '温和上涨，趋势向好'; tag = 'watch'; }
     else if(pct >= 0){ analysis = '小幅波动，观望为主'; tag = 'watch'; }
     else if(pct >= -5){ analysis = '下跌调整，等待企稳'; tag = 'risk'; }
@@ -2102,16 +2264,13 @@ function renderStockList(list){
 function showStockDetail(code, name, price, pct, change){
   const isUp = pct >= 0;
   const pctStr = (isUp?'+':'') + pct.toFixed(2) + '%';
-  const changeStr = (isUp?'+':'') + change.toFixed(2);
   let analysis = '';
-  let tag = '';
-  if(pct >= 9.8){ analysis = '涨停板'; tag = 'risk'; }
-  else if(pct >= 5){ analysis = '强势买点'; tag = 'buy'; }
-  else if(pct >= 2){ analysis = '值得关注'; tag = 'watch'; }
-  else if(pct >= 0){ analysis = '观望'; tag = 'watch'; }
-  else { analysis = '风险提示'; tag = 'risk'; }
-
-  toast(`${name} ${price.toFixed(2)} ${pctStr}`);
+  if(pct >= 9.8) analysis = '涨停板';
+  else if(pct >= 5) analysis = '强势买点';
+  else if(pct >= 2) analysis = '值得关注';
+  else if(pct >= 0) analysis = '观望';
+  else analysis = '风险提示';
+  toast(`${name} ${price.toFixed(2)} ${pctStr} · ${analysis}`);
 }
 
 document.getElementById('refreshStock').addEventListener('click', fetchStock);
@@ -2126,22 +2285,271 @@ document.querySelectorAll('#stockTypeTabs .type-tab').forEach(t=>{
 
 // 预置股票数据（API不可用时降级）
 const FALLBACK_STOCK = [
-  {f14:'贵州茅台',f12:'600519',f2:1689.50,f3:2.35,f4:38.80,f5:23456},
-  {f14:'宁德时代',f12:'300750',f2:215.60,f3:5.67,f4:11.58,f5:45678},
-  {f14:'比亚迪',f12:'002594',f2:268.45,f3:3.21,f4:8.35,f5:32145},
-  {f14:'隆基绿能',f12:'601012',f2:23.78,f3:4.56,f4:1.04,f5:56789},
-  {f14:'阳光电源',f12:'300274',f2:112.30,f3:6.78,f4:7.12,f5:12345},
-  {f14:'通威股份',f12:'600438',f2:28.90,f3:3.45,f4:0.96,f5:23456},
-  {f14:'美的集团',f12:'000333',f2:78.56,f3:1.89,f4:1.46,f5:34567},
-  {f14:'五粮液',f12:'000858',f2:156.78,f3:2.67,f4:4.08,f5:45678},
-  {f14:'招商银行',f12:'600036',f2:38.45,f3:1.23,f4:0.47,f5:67890},
-  {f14:'恒瑞医药',f12:'600276',f2:48.90,f3:4.12,f4:1.93,f5:12345}
+  {f14:'贵州茅台',f12:'600519',f2:1689.50,f3:2.35,f4:38.80,f5:23456,f62:50000000},
+  {f14:'宁德时代',f12:'300750',f2:215.60,f3:5.67,f4:11.58,f5:45678,f62:120000000},
+  {f14:'比亚迪',f12:'002594',f2:268.45,f3:3.21,f4:8.35,f5:32145,f62:80000000},
+  {f14:'隆基绿能',f12:'601012',f2:23.78,f3:4.56,f4:1.04,f5:56789,f62:95000000},
+  {f14:'阳光电源',f12:'300274',f2:112.30,f3:6.78,f4:7.12,f5:12345,f62:110000000},
+  {f14:'通威股份',f12:'600438',f2:28.90,f3:3.45,f4:0.96,f5:23456,f62:45000000},
+  {f14:'美的集团',f12:'000333',f2:78.56,f3:1.89,f4:1.46,f5:34567,f62:30000000},
+  {f14:'五粮液',f12:'000858',f2:156.78,f3:2.67,f4:4.08,f5:45678,f62:60000000},
+  {f14:'招商银行',f12:'600036',f2:38.45,f3:1.23,f4:0.47,f5:67890,f62:25000000},
+  {f14:'恒瑞医药',f12:'600276',f2:48.90,f3:4.12,f4:1.93,f5:12345,f62:70000000}
+];
+
+const FALLBACK_FUND_FLOW = [
+  {f14:'宁德时代',f12:'300750',f62:120000000,f3:5.67},
+  {f14:'阳光电源',f12:'300274',f62:110000000,f3:6.78},
+  {f14:'隆基绿能',f12:'601012',f62:95000000,f3:4.56},
+  {f14:'比亚迪',f12:'002594',f62:80000000,f3:3.21},
+  {f14:'恒瑞医药',f12:'600276',f62:70000000,f3:4.12}
 ];
 
 function renderStock(){
   if(document.getElementById('stockList').children.length === 0){
     fetchStock();
   }
+}
+
+// ===== 爆款分析室 =====
+let viralPlatform = 'douyin';
+
+const VIRAL_ANALYSIS = {
+  // 抖音爆款分析模板
+  analyzeDouyin(title, heat){
+    // 基于标题关键词分析
+    let type = '热点资讯';
+    let reason = '';
+    let idea = '';
+
+    if(/穿搭|造型|妆容|护肤|发型/.test(title)){
+      type = '时尚美妆';
+      reason = '视觉冲击力强 + 季节性话题 + 实用可复制。用户刷到立刻想知道"我也能这样穿"，引发模仿和收藏。标题带"来啦""的氛围感拉满，符合夏日节点。';
+      idea = '拍摄一条"护士下班后的5分钟通勤妆"，用前后对比+口播教学，标题：「护士姐妹的下班妆｜3步搞定｜从憔悴到元气」';
+    } else if(/美食|做饭|食谱|菜|吃/.test(title)){
+      type = '美食种草';
+      reason = '强食欲视觉 + 情绪共鸣 + 简单易学。美食视频天然有"停下来看完"的魔力，配合"一代人""回忆杀"等情感词，触发用户分享欲。';
+      idea = '拍"护士值班室的10分钟快手菜"，真实场景+低成本+可操作，标题：「夜班10分钟也能吃好｜护士快手菜｜不用锅」';
+    } else if(/电影|票房|剧|演唱会|明星/.test(title)){
+      type = '娱乐影视';
+      reason = 'IP热度+情绪投射+群体认同。影视话题天然有讨论度，"全球观众""新窗口"等表述放大文化自豪感，激发评论欲。';
+      idea = '做"护士题材影视剧盘点"，结合专业角度吐槽医护剧穿帮，标题：「护士看完10部医护剧，发现这些常识都错了」';
+    } else if(/猫|狗|宠物|动物/.test(title)){
+      type = '萌宠治愈';
+      reason = '治愈系内容+拟人化叙事+反差萌。宠物视频完播率极高，"吵着要拍"的反差设定制造笑点，触发点赞和转发。';
+      idea = '拍科室猫/流浪猫的故事，结合护士日常，标题：「医院后门的猫，每天等我下班｜治愈日常」';
+    } else if(/歌|舞|音乐|挑战/.test(title)){
+      type = '音乐舞蹈';
+      reason = 'BGM洗脑+动作可复制+挑战裂变。舞蹈挑战天然适合模仿，"拖拉机舞"这种魔性命名容易形成记忆点。';
+      idea = '做一个"护士版XX舞"，在科室/走廊拍摄，结合护理动作改编，标题：「护士版拖拉机舞｜科室集体整活｜医护版」';
+    } else if(/谣言|事件|事故|命案/.test(title)){
+      type = '社会热点';
+      reason = '焦虑情绪+辟谣价值+信息差。社会事件类话题流量大，"系谣言"的反转满足用户求真心理。';
+      idea = '从护士角度科普相关医学知识，标题：「作为护士，告诉你遇到XX该怎么办｜专业科普」';
+    } else if(/旅游|城市|景点|打卡/.test(title)){
+      type = '旅行种草';
+      reason = '视觉享受+宝藏挖掘+FOMO心理。"被低估的宝藏"制造信息差，激发探索欲和打卡冲动。';
+      idea = '拍"小城医院/卫生院的真实日常"，像旅游vlog一样呈现，标题：「乡镇卫生院日常｜被低估的宝藏工作｜护士vlog」';
+    } else if(/科技|芯片|AI|公司|市值/.test(title)){
+      type = '科技财经';
+      reason = '民族自豪+财富效应+信息差。"超过英特尔""首日涨465%"等数据有强冲击力，激发民族认同和投资好奇。';
+      idea = '从医疗设备角度切入，讲国产医疗器械故事，标题：「国产医疗设备的崛起｜护士亲历｜这些设备已经国产化」';
+    } else {
+      type = '情感共鸣';
+      reason = '金句+情绪投射+共鸣转发。这类标题往往用文学化表达触发用户代入，"青春""江河""放下"等词引发情绪共振，适合转发表达自我。';
+      idea = '做"护士的金句日记"，每天一句工作感悟+一个故事，标题：「护士日记｜今天一个病人跟我说了这句话」';
+    }
+
+    return { type, reason, idea };
+  },
+
+  // 小红书爆款分析
+  analyzeXhs(title, heat){
+    let type = '生活分享';
+    let reason = '';
+    let idea = '';
+
+    if(/穿搭|ootd|造型/.test(title)){
+      type = '穿搭种草';
+      reason = '小红书穿搭是核心品类，用户搜索意图强，"复古风""通勤"等长尾词精准命中目标人群，封面+标题组合点击率高。';
+      idea = '做"护士通勤穿搭系列"，每天一套，标题：「护士ootd｜第7天｜下班直接约会的穿搭」';
+    } else if(/美食|食谱|探店/.test(title)){
+      type = '美食探店';
+      reason = '小红书美食内容决策属性强，用户主动搜索"附近美食"，"一代人""美食人格"等情感词制造共鸣，笔记收藏率高。';
+      idea = '做"医院食堂测评"系列，标题：「乡镇卫生院食堂测评｜第3天｜性价比之王」';
+    } else if(/旅游|攻略|打卡/.test(title)){
+      type = '旅行攻略';
+      reason = '小红书旅行内容种草属性强，"被低估""宝藏"等词触发探索欲，图文+地图+路线的组合是高收藏格式。';
+      idea = '做"护士周末小众游"，标题：「护士周末48h｜小众古镇｜人均300｜治愈系」';
+    } else if(/护肤|美妆|平价/.test(title)){
+      type = '美妆护肤';
+      reason = '小红书美妆是超级品类，"平替""避雷"等词触发比价心理，成分党内容收藏率高。';
+      idea = '做"护士夜班护肤routine"，标题：「夜班护士的护肤routine｜平价国货｜抗暗沉」';
+    } else {
+      type = '生活情感';
+      reason = '小红书情感类内容容易引发女性用户共鸣，"放下""回忆"等词触发情绪分享，评论区互动率高。';
+      idea = '做"护士碎碎念"系列，标题：「护士的碎碎念｜今天那个老奶奶｜眼眶红了」';
+    }
+
+    return { type, reason, idea };
+  }
+};
+
+async function fetchViral(){
+  const el = document.getElementById('viralList');
+  el.innerHTML = '<div class="hot-loading"><div class="spinner"></div>正在获取热点数据...</div>';
+  document.getElementById('viralUpdateTime').textContent = '加载中...';
+
+  try{
+    if(viralPlatform === 'douyin'){
+      const resp = await fetch('https://api.vvhan.com/api/hotlist/douyinHot');
+      if(resp.ok){
+        const data = await resp.json();
+        if(data.success && data.data && data.data.length>0){
+          Store.data.hot.list = data.data.map(item=>({
+            title: item.title || item.name,
+            heat: item.hot || '',
+            url: item.url || item.mobil_url || ('https://www.douyin.com/search/'+encodeURIComponent(item.title||item.name))
+          }));
+          Store.data.hot.updateTime = new Date().toLocaleString('zh-CN');
+          Store.save();
+          renderViralList();
+          document.getElementById('viralUpdateTime').textContent = '更新于 ' + Store.data.hot.updateTime;
+          toast('热点更新成功 ✓');
+          return;
+        }
+      }
+      throw new Error('API失败');
+    } else {
+      // 小红书 - 用预置数据（小红书无免费实时API）
+      renderViralList();
+      document.getElementById('viralUpdateTime').textContent = '小红书热点（编辑精选）';
+      return;
+    }
+  }catch(e){
+    Store.data.hot.list = FALLBACK_HOT;
+    Store.data.hot.updateTime = new Date().toLocaleString('zh-CN') + '（缓存）';
+    Store.save();
+    renderViralList();
+    document.getElementById('viralUpdateTime').textContent = Store.data.hot.updateTime;
+    toast('使用缓存数据');
+  }
+}
+
+function renderViralList(){
+  const el = document.getElementById('viralList');
+  const list = Store.data.hot.list;
+
+  if(list.length===0){
+    el.innerHTML = '<div class="hot-empty">暂无数据<br><br><button class="btn" onclick="fetchViral()">立即获取</button></div>';
+    return;
+  }
+
+  // 只分析前10条（避免太长）
+  const display = list.slice(0, 10);
+  el.innerHTML = display.map((h, i)=>{
+    const heat = h.heat || '';
+    const analysis = viralPlatform === 'douyin'
+      ? VIRAL_ANALYSIS.analyzeDouyin(h.title, heat)
+      : VIRAL_ANALYSIS.analyzeXhs(h.title, heat);
+
+    return `
+      <div class="viral-card">
+        <div class="viral-header">
+          <div class="viral-rank">${i+1}</div>
+          <div style="flex:1">
+            <div class="viral-title">${h.title}</div>
+            ${heat ? '<div class="viral-heat">🔥 '+heat+'</div>' : ''}
+          </div>
+        </div>
+        <div class="viral-body">
+          <div class="viral-section">
+            <div class="viral-section-title">
+              <div class="icon">📊</div>内容类型
+            </div>
+            <div class="viral-section-content">
+              <strong>${analysis.type}</strong>
+              <div class="viral-tags">
+                <span class="viral-tag">#${viralPlatform==='douyin'?'抖音':'小红书'}</span>
+                <span class="viral-tag">#${analysis.type}</span>
+                <span class="viral-tag">#爆款分析</span>
+              </div>
+            </div>
+          </div>
+          <div class="viral-section">
+            <div class="viral-section-title">
+              <div class="icon">🔍</div>爆火原因分析
+            </div>
+            <div class="viral-section-content">${analysis.reason}</div>
+          </div>
+          <div class="viral-section">
+            <div class="viral-section-title">
+              <div class="icon">💡</div>原创创作思路
+            </div>
+            <div class="viral-section-content idea">${analysis.idea}</div>
+          </div>
+        </div>
+        <div class="viral-actions">
+          <button class="btn btn-sm" onclick="window.open('${h.url}','_blank')">▶ 查看原视频</button>
+          <button class="btn btn-sm btn-outline" onclick="copyViralIdea(${i})">📋 复制思路</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyViralIdea(idx){
+  const h = Store.data.hot.list[idx];
+  const analysis = viralPlatform === 'douyin'
+    ? VIRAL_ANALYSIS.analyzeDouyin(h.title, h.heat)
+    : VIRAL_ANALYSIS.analyzeXhs(h.title, h.heat);
+  const text = `【爆款分析】${h.title}\n类型：${analysis.type}\n爆火原因：${analysis.reason}\n\n【我的创作思路】\n${analysis.idea}\n\n原视频：${h.url}`;
+  navigator.clipboard.writeText(text).then(()=>{
+    toast('已复制到剪贴板 ✓');
+  }).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('已复制 ✓');
+  });
+}
+
+document.getElementById('refreshViral').addEventListener('click', fetchViral);
+document.querySelectorAll('#viralPlatformTabs .type-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#viralPlatformTabs .type-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    viralPlatform = t.dataset.platform;
+    if(viralPlatform === 'xhs' && Store.data.hot.list.length === 0){
+      Store.data.hot.list = XHS_FALLBACK_HOT;
+    }
+    renderViralList();
+  });
+});
+
+// 小红书热点预置数据
+const XHS_FALLBACK_HOT = [
+  {title:'夏日复古风通勤穿搭｜小个子也适合',heat:'12.5w赞',url:'https://www.xiaohongshu.com/search_result?keyword=复古风通勤穿搭'},
+  {title:'护士夜班护肤routine｜平价国货分享',heat:'8.7w赞',url:'https://www.xiaohongshu.com/search_result?keyword=护士护肤'},
+  {title:'乡镇卫生院食堂测评｜性价比之王',heat:'5.2w赞',url:'https://www.xiaohongshu.com/search_result?keyword=卫生院食堂'},
+  {title:'小众古镇48h｜人均300治愈系旅行',heat:'15.3w赞',url:'https://www.xiaohongshu.com/search_result?keyword=小众古镇'},
+  {title:'一代人的美食人格｜你属于哪种',heat:'9.8w赞',url:'https://www.xiaohongshu.com/search_result?keyword=美食人格'},
+  {title:'平价彩妆避雷｜这些别买',heat:'11.2w赞',url:'https://www.xiaohongshu.com/search_result?keyword=平价彩妆避雷'},
+  {title:'护士备考神器｜30天逆袭护考',heat:'7.5w赞',url:'https://www.xiaohongshu.com/search_result?keyword=护考备考'},
+  {title:'夏天的西瓜神仙吃法｜3种新吃法',heat:'6.9w赞',url:'https://www.xiaohongshu.com/search_result?keyword=西瓜吃法'},
+  {title:'小猫吵着要拍百万运镜｜太可爱了',heat:'13.1w赞',url:'https://www.xiaohongshu.com/search_result?keyword=萌猫'},
+  {title:'护士碎碎念｜今天那个老奶奶眼眶红了',heat:'4.8w赞',url:'https://www.xiaohongshu.com/search_result?keyword=护士日记'}
+];
+
+function renderViral(){
+  if(Store.data.hot.list.length === 0){
+    Store.data.hot.list = FALLBACK_HOT;
+  }
+  renderViralList();
+  document.getElementById('viralUpdateTime').textContent = Store.data.hot.updateTime || '点击刷新获取最新';
 }
 
 // ===== 设置 =====
