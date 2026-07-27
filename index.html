@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>杨亚茹工作台</title>
+<style>
+  :root{
+    --olive:#6b7a4b;          /* 橄榄绿主色 */
+    --olive-dark:#556039;
+    --olive-light:#8a9a6a;
+    --olive-bg:#f4f6ec;
+    --olive-soft:#e8ecd6;
+    --accent:#d4a574;          /* 暖点缀色 */
+    --danger:#c0603a;
+    --text:#2c2c2c;
+    --text-light:#6b6b6b;
+    --text-mute:#9a9a9a;
+    --card:#ffffff;
+    --border:#ececec;
+    --shadow:0 2px 16px rgba(107,122,75,.08);
+    --shadow-hover:0 4px 24px rgba(107,122,75,.18);
+    --radius:18px;
+    --radius-sm:12px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+    color:var(--text);
+    background:var(--olive-bg);
+    -webkit-font-smoothing:antialiased;
+    user-select:none;
+    position:relative;
+  }
+
+  /* ===== 顶部状态栏 ===== */
+  .status-bar{
+    height:44px;
+    background:var(--olive);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    padding:0 16px;
+    font-size:17px;
+    font-weight:600;
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    padding-top:env(safe-area-inset-top,0);
+    height:calc(44px + env(safe-area-inset-top,0));
+    justify-content:space-between;
+  }
+  .status-bar .left{display:flex;align-items:center;gap:10px;width:90px}
+  .status-bar .menu-btn{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;border-radius:8px;
+    transition:background .2s;
+  }
+  .status-bar .menu-btn:active{background:rgba(255,255,255,.15)}
+  .status-bar .menu-btn svg{width:22px;height:22px}
+  .status-bar .title{
+    text-align:center;flex:1;font-size:17px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .status-bar .right{width:90px;display:flex;justify-content:flex-end;gap:8px}
+
+  /* ===== 侧边抽屉 ===== */
+  .drawer-mask{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,.4);
+    z-index:200;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s;
+  }
+  .drawer-mask.show{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;top:0;left:0;bottom:0;
+    width:280px;
+    background:var(--olive);
+    color:#fff;
+    z-index:201;
+    transform:translateX(-100%);
+    transition:transform .3s cubic-bezier(.4,.2,.2,1);
+    display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top,0);
+    max-width:85vw;
+  }
+  .drawer.show{transform:translateX(0)}
+  .drawer-header{
+    padding:32px 24px 24px;
+    text-align:center;
+    background:var(--olive-dark);
+  }
+  .avatar{
+    width:64px;height:64px;border-radius:50%;
+    background:var(--accent);
+    margin:0 auto 12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;font-weight:600;
+    border:3px solid rgba(255,255,255,.3);
+  }
+  .drawer-header .name{font-size:18px;font-weight:600;margin-bottom:4px}
+  .drawer-header .desc{font-size:12px;opacity:.75}
+  .nav-list{flex:1;padding:16px 0;overflow-y:auto}
+  .nav-item{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 24px;
+    color:rgba(255,255,255,.85);
+    cursor:pointer;font-size:15px;
+    transition:all .2s;
+    border-left:3px solid transparent;
+  }
+  .nav-item:active{background:rgba(255,255,255,.08)}
+  .nav-item.active{
+    background:rgba(255,255,255,.12);
+    border-left-color:var(--accent);
+    color:#fff;
+  }
+  .nav-item svg{width:22px;height:22px;flex-shrink:0}
+  .drawer-footer{
+    padding:16px 24px;
+    font-size:12px;opacity:.6;
+    border-top:1px solid rgba(255,255,255,.1);
+  }
+
+  /* ===== 主内容区 ===== */
+  .app{
+    padding-top:calc(44px + env(safe-area-inset-top,0));
+    height:100vh;
+    overflow:hidden;
+  }
+  .page{
+    display:none;
+    height:calc(100vh - 44px - env(safe-area-inset-top,0px));
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:16px;
+    padding-bottom:32px;
+  }
+  .page.active{display:block}
+
+  /* ===== 通用组件 ===== */
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
+    box-shadow:var(--shadow);
+  }
+  .card-title{
+    font-size:16px;font-weight:600;
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:12px;
+  }
+  .card-title .icon{
+    width:28px;height:28px;border-radius:8px;
+    background:var(--olive-soft);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--olive-dark);
+  }
+  .card-title .icon svg{width:16px;height:16px}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:10px 20px;
+    background:var(--olive);
+    color:#fff;
+    border:none;border-radius:var(--radius-sm);
+    font-size:14px;font-weight:500;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .btn:active{transform:scale(.97);background:var(--olive-dark)}
+  .btn-outline{background:transparent;color:var(--olive);border:1px solid var(--olive-light)}
+  .btn-outline:active{background:var(--olive-soft)}
+  .btn-block{display:flex;width:100%}
+  .btn-sm{padding:6px 14px;font-size:12px}
+  .btn-danger{background:var(--danger)}
+
+  .input,.select{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    font-size:15px;
+    background:#fafafa;
+    transition:all .2s;
+  }
+  .input:focus,.select:focus{
+    outline:none;
+    border-color:var(--olive-light);
+    background:#fff;
+  }
+  .form-row{margin-bottom:12px}
+  .form-label{font-size:13px;color:var(--text-light);margin-bottom:6px;display:block}
+
+  /* ===== 首页 ===== */
+  .hero{
+    background:linear-gradient(135deg,var(--olive) 0%,var(--olive-light) 100%);
+    border-radius:var(--radius);
+    padding:24px 20px;
+    color:#fff;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:'';position:absolute;right:-30px;top:-30px;
+    width:140px;height:140px;border-radius:50%;
+    background:rgba(255,255,255,.08);
+  }
+  .hero::before{
+    content:'';position:absolute;right:40px;bottom:-50px;
+    width:90px;height:90px;border-radius:50%;
+    background:rgba(255,255,255,.05);
+  }
+  .hero .greeting{font-size:14px;opacity:.85;margin-bottom:4px}
+  .hero .date{font-size:13px;opacity:.7}
+  .hero .name{font-size:26px;font-weight:700;margin:8px 0 4px}
+  .hero .quote{font-size:13px;opacity:.85;line-height:1.5;margin-top:8px}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .stat-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:16px;
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+  .stat-card .label{font-size:12px;color:var(--text-light);margin-bottom:6px}
+  .stat-card .value{font-size:22px;font-weight:700;color:var(--olive-dark)}
+  .stat-card .sub{font-size:11px;color:var(--text-mute);margin-top:4px}
+
+  .quick-entry{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .quick-item{
+    background:var(--card);
+    border-radius:var(--radius-sm);
+    padding:14px 8px;
+    text-align:center;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .quick-item:active{transform:scale(.95)}
+  .quick-item .qi-icon{
+    width:40px;height:40px;border-radius:12px;
+    margin:0 auto 8px;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;
+  }
+  .quick-item .qi-label{font-size:12px;color:var(--text)}
+  .quick-item .qi-label small{display:block;font-size:10px;color:var(--text-mute);margin-top:2px}
+
+  /* ===== 记账 ===== */
+  .book-summary{
+    background:linear-gradient(135deg,var(--olive) 0%,var(--olive-dark) 100%);
+    border-radius:var(--radius);
+    padding:20px;
+    color:#fff;
+    margin-bottom:16px;
+    display:flex;
+    justify-content:space-around;
+  }
+  .book-summary .item{text-align:center}
+  .book-summary .item .lbl{font-size:12px;opacity:.75;margin-bottom:4px}
+  .book-summary .item .amt{font-size:20px;font-weight:700}
+  .book-summary .divider{width:1px;background:rgba(255,255,255,.2)}
+
+  .type-tabs{
+    display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;
+    padding-bottom:4px;
+  }
+  .type-tab{
+    padding:6px 16px;
+    background:var(--card);
+    border-radius:20px;
+    font-size:13px;
+    white-space:nowrap;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:all .2s;
+    color:var(--text-light);
+  }
+  .type-tab.active{background:var(--olive);color:#fff;font-weight:500}
+
+  .record-list .record{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .record:last-child{border-bottom:none}
+  .record .r-icon{
+    width:40px;height:40px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .record .r-icon.expense{background:var(--olive-soft);color:var(--olive-dark)}
+  .record .r-icon.income{background:#fce8d4;color:var(--accent)}
+  .record .r-icon svg{width:20px;height:20px}
+  .record .r-info{flex:1;min-width:0}
+  .record .r-cat{font-size:14px;font-weight:500;margin-bottom:2px}
+  .record .r-note{font-size:12px;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .record .r-amount{font-size:16px;font-weight:600;text-align:right}
+  .record .r-amount.expense{color:var(--danger)}
+  .record .r-amount.income{color:var(--olive)}
+  .record .r-time{font-size:11px;color:var(--text-mute);margin-top:2px}
+
+  /* 模态框 */
+  .modal-mask{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,.4);
+    z-index:300;
+    display:flex;align-items:flex-end;
+    opacity:0;pointer-events:none;
+    transition:opacity .25s;
+  }
+  .modal-mask.show{opacity:1;pointer-events:auto}
+  .modal-sheet{
+    background:#fff;
+    width:100%;
+    border-radius:24px 24px 0 0;
+    padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));
+    transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.4,.2,.2,1);
+    max-height:80vh;overflow-y:auto;
+  }
+  .modal-mask.show .modal-sheet{transform:translateY(0)}
+  .sheet-handle{
+    width:40px;height:4px;border-radius:2px;
+    background:#ddd;margin:0 auto 16px;
+  }
+  .sheet-title{font-size:17px;font-weight:600;margin-bottom:16px;text-align:center}
+
+  .cat-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    margin-bottom:16px;
+  }
+  .cat-item{
+    padding:10px 4px;
+    border-radius:var(--radius-sm);
+    text-align:center;
+    background:var(--olive-bg);
+    cursor:pointer;
+    transition:all .2s;
+    border:2px solid transparent;
+  }
+  .cat-item.selected{border-color:var(--olive);background:var(--olive-soft)}
+  .cat-item .ci-icon{font-size:24px;margin-bottom:4px}
+  .cat-item .ci-name{font-size:11px;color:var(--text-light)}
+
+  /* ===== 抖音热点 ===== */
+  .hot-refresh{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .hot-update-time{font-size:12px;color:var(--text-mute)}
+  .hot-tip{
+    background:var(--olive-soft);
+    border-radius:var(--radius-sm);
+    padding:10px 14px;
+    font-size:12px;
+    color:var(--olive-dark);
+    margin-bottom:14px;
+    line-height:1.5;
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .hot-tip svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+  .hot-list .hot-item{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .hot-item:last-child{border-bottom:none}
+  .hot-rank{
+    width:28px;text-align:center;
+    font-size:18px;font-weight:700;
+    color:var(--text-mute);
+    flex-shrink:0;
+  }
+  .hot-item:nth-child(1) .hot-rank{color:var(--danger)}
+  .hot-item:nth-child(2) .hot-rank{color:var(--accent)}
+  .hot-item:nth-child(3) .hot-rank{color:var(--olive)}
+  .hot-content{flex:1;min-width:0}
+  .hot-title{font-size:14px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hot-heat{font-size:12px;color:var(--text-mute)}
+  .hot-arrow{color:var(--text-mute);flex-shrink:0}
+  .hot-arrow svg{width:16px;height:16px}
+
+  .hot-empty{text-align:center;padding:40px 0;color:var(--text-mute);font-size:14px}
+  .hot-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px 0;color:var(--olive);font-size:14px}
+  .spinner{
+    width:18px;height:18px;
+    border:2px solid var(--olive-soft);
+    border-top-color:var(--olive);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ===== 学习 ===== */
+  .study-stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+    margin-bottom:16px;
+  }
+  .study-stat{
+    background:var(--card);
+    border-radius:var(--radius-sm);
+    padding:14px 10px;
+    text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .study-stat .num{font-size:22px;font-weight:700;color:var(--olive-dark)}
+  .study-stat .lbl{font-size:11px;color:var(--text-light);margin-top:2px}
+
+  .mode-tabs{
+    display:flex;gap:8px;margin-bottom:14px;
+    background:var(--card);
+    padding:4px;
+    border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);
+  }
+  .mode-tab{
+    flex:1;padding:8px;text-align:center;
+    border-radius:8px;font-size:13px;
+    cursor:pointer;color:var(--text-light);
+    transition:all .2s;
+  }
+  .mode-tab.active{background:var(--olive);color:#fff;font-weight:500}
+
+  .question-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:var(--shadow);
+    margin-bottom:14px;
+  }
+  .q-meta{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:12px;
+  }
+  .q-tag{
+    font-size:11px;
+    padding:3px 8px;
+    background:var(--olive-soft);
+    color:var(--olive-dark);
+    border-radius:4px;
+    font-weight:500;
+  }
+  .q-index{font-size:12px;color:var(--text-mute)}
+  .q-text{
+    font-size:16px;font-weight:500;
+    line-height:1.6;
+    margin-bottom:16px;
+  }
+  .q-options{display:flex;flex-direction:column;gap:10px}
+  .q-option{
+    padding:14px;
+    border:2px solid var(--border);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:all .2s;
+    font-size:14px;
+    display:flex;align-items:flex-start;gap:10px;
+  }
+  .q-option:active{transform:scale(.98)}
+  .q-option .opt-label{
+    width:24px;height:24px;border-radius:50%;
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:600;flex-shrink:0;
+    transition:all .2s;
+  }
+  .q-option.selected{border-color:var(--olive);background:var(--olive-bg)}
+  .q-option.selected .opt-label{background:var(--olive);color:#fff;border-color:var(--olive)}
+  .q-option.correct{border-color:#4caf50;background:#e8f5e9}
+  .q-option.correct .opt-label{background:#4caf50;color:#fff;border-color:#4caf50}
+  .q-option.wrong{border-color:var(--danger);background:#fce8e8}
+  .q-option.wrong .opt-label{background:var(--danger);color:#fff;border-color:var(--danger)}
+  .q-option.disabled{pointer-events:none;opacity:.7}
+
+  .q-explain{
+    margin-top:14px;
+    padding:14px;
+    background:var(--olive-bg);
+    border-radius:var(--radius-sm);
+    font-size:13px;
+    line-height:1.6;
+    display:none;
+  }
+  .q-explain.show{display:block}
+  .q-explain .ans-tag{
+    display:inline-block;
+    padding:2px 8px;border-radius:4px;
+    font-size:12px;font-weight:600;
+    margin-bottom:6px;
+  }
+  .q-explain .ans-tag.correct{background:#4caf50;color:#fff}
+  .q-explain .ans-tag.wrong{background:var(--danger);color:#fff}
+
+  .q-nav{
+    display:flex;gap:10px;margin-top:16px;
+  }
+  .q-nav .btn{flex:1}
+
+  .progress-bar{
+    width:100%;height:6px;
+    background:var(--olive-soft);
+    border-radius:3px;
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--olive);
+    border-radius:3px;
+    transition:width .4s;
+  }
+
+  /* 错题列表 */
+  .wrong-item{
+    background:var(--card);
+    border-radius:var(--radius-sm);
+    padding:14px;
+    margin-bottom:10px;
+    box-shadow:var(--shadow);
+    border-left:3px solid var(--danger);
+  }
+  .wrong-item .wi-q{font-size:14px;font-weight:500;margin-bottom:6px;line-height:1.5}
+  .wrong-item .wi-a{font-size:12px;color:var(--text-light)}
+  .wrong-item .wi-a strong{color:var(--olive-dark)}
+
+  /* 收藏 */
+  .fav-item .wi-q{display:flex;align-items:flex-start;gap:8px}
+  .fav-item .star{color:var(--accent);flex-shrink:0;margin-top:2px}
+
+  /* 空状态 */
+  .empty-state{text-align:center;padding:50px 20px;color:var(--text-mute)}
+  .empty-state .emoji{font-size:48px;margin-bottom:12px}
+  .empty-state .text{font-size:14px;margin-bottom:16px}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:80px;left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:rgba(0,0,0,.8);
+    color:#fff;padding:10px 20px;
+    border-radius:24px;font-size:14px;
+    z-index:999;
+    opacity:0;pointer-events:none;
+    transition:all .3s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* 浮动按钮 */
+  .fab{
+    position:fixed;
+    bottom:calc(24px + env(safe-area-inset-bottom,0px));
+    right:20px;
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--olive);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(107,122,75,.4);
+    cursor:pointer;
+    z-index:50;
+    transition:all .2s;
+  }
+  .fab:active{transform:scale(.92)}
+  .fab svg{width:26px;height:26px}
+
+  /* 滚动条隐藏 */
+  ::-webkit-scrollbar{width:0;display:none}
+
+  /* 选择题分类筛选 */
+  .filter-bar{margin-bottom:14px}
+  .filter-bar .type-tabs{margin-bottom:0}
+
+  /* ===== 创作工作台 ===== */
+  .create-template{
+    background:var(--card);
+    border-radius:var(--radius-sm);
+    padding:14px;
+    margin-bottom:10px;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    transition:all .2s;
+    border-left:3px solid var(--olive-light);
+  }
+  .create-template:active{transform:scale(.98)}
+  .create-template .ct-title{font-size:15px;font-weight:600;margin-bottom:4px;color:var(--olive-dark)}
+  .create-template .ct-desc{font-size:12px;color:var(--text-light);line-height:1.5}
+  .create-template .ct-tag{
+    display:inline-block;font-size:10px;
+    padding:2px 6px;border-radius:4px;
+    background:var(--olive-soft);color:var(--olive-dark);
+    margin-top:6px;
+  }
+  .script-output{
+    background:var(--olive-bg);
+    border-radius:var(--radius-sm);
+    padding:14px;
+    font-size:13px;line-height:1.7;
+    margin-top:12px;
+    white-space:pre-wrap;
+    word-break:break-all;
+  }
+  .script-output .section{font-weight:600;color:var(--olive-dark);margin-top:8px;display:block}
+  .script-output .section:first-child{margin-top:0}
+  .copy-btn{
+    margin-top:10px;
+    background:var(--olive-soft);
+    color:var(--olive-dark);
+    border:none;
+    padding:8px 16px;
+    border-radius:20px;
+    font-size:12px;
+    cursor:pointer;
+  }
+
+  /* ===== 股票雷达 ===== */
+  .stock-summary{
+    background:linear-gradient(135deg,#c0392b 0%,#e74c3c 100%);
+    border-radius:var(--radius);
+    padding:18px;
+    color:#fff;
+    margin-bottom:14px;
+    text-align:center;
+  }
+  .stock-summary .ss-title{font-size:13px;opacity:.85;margin-bottom:4px}
+  .stock-summary .ss-count{font-size:28px;font-weight:700}
+  .stock-summary .ss-sub{font-size:12px;opacity:.75;margin-top:4px}
+  .stock-item{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .stock-item:last-child{border-bottom:none}
+  .stock-rank-badge{
+    width:24px;height:24px;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#fff;
+    flex-shrink:0;
+  }
+  .stock-info{flex:1;min-width:0}
+  .stock-name{font-size:14px;font-weight:600;margin-bottom:2px}
+  .stock-code{font-size:11px;color:var(--text-mute)}
+  .stock-price{text-align:right;flex-shrink:0}
+  .stock-change{font-size:16px;font-weight:700}
+  .stock-change.up{color:#e74c3c}
+  .stock-change.down{color:#27ae60}
+  .stock-pct{font-size:12px;margin-top:2px}
+  .stock-pct.up{color:#e74c3c}
+  .stock-pct.down{color:#27ae60}
+  .stock-tip{
+    background:#fff3e0;
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    font-size:12px;
+    color:#e65100;
+    margin-bottom:12px;
+    line-height:1.5;
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .stock-detail{
+    margin-top:12px;
+    padding:14px;
+    background:var(--olive-bg);
+    border-radius:var(--radius-sm);
+    font-size:13px;line-height:1.7;
+  }
+  .stock-detail .row{display:flex;justify-content:space-between;padding:4px 0}
+  .stock-detail .row .lbl{color:var(--text-light)}
+  .stock-detail .row .val{font-weight:600}
+  .analysis-tag{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:12px;
+    font-size:11px;font-weight:600;
+    margin-top:6px;
+  }
+  .analysis-tag.buy{background:#fdecea;color:#e74c3c}
+  .analysis-tag.watch{background:#fff3e0;color:#e65100}
+  .analysis-tag.risk{background:#fafafa;color:#999}
+</style>
+</head>
+<body>
+
+<!-- 状态栏 -->
+<div class="status-bar">
+  <div class="left">
+    <div class="menu-btn" id="menuBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </div>
+  </div>
+  <div class="title" id="pageTitle">杨亚茹工作台</div>
+  <div class="right"></div>
+</div>
+
+<!-- 抽屉导航 -->
+<div class="drawer-mask" id="drawerMask"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="avatar">杨</div>
+    <div class="name">杨亚茹</div>
+    <div class="desc">备考 · 记账 · 创作工作台</div>
+  </div>
+  <div class="nav-list">
+    <div class="nav-item active" data-page="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12L12 3l9 9"/><path d="M5 10v10h14V10"/></svg>
+      <span>首页</span>
+    </div>
+    <div class="nav-item" data-page="book">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>记账</span>
+    </div>
+    <div class="nav-item" data-page="hot">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2s4 4 4 8a4 4 0 01-8 0c0-2 1-3 1-3s-3 2-3 6a6 6 0 0012 0c0-6-6-11-6-11z"/></svg>
+      <span>抖音热点</span>
+    </div>
+    <div class="nav-item" data-page="study">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <span>备考学习</span>
+    </div>
+    <div class="nav-item" data-page="wrong">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>错题本</span>
+    </div>
+    <div class="nav-item" data-page="fav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>我的收藏</span>
+    </div>
+    <div class="nav-item" data-page="create">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+      <span>创作工作台</span>
+    </div>
+    <div class="nav-item" data-page="stock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <span>股票雷达</span>
+    </div>
+    <div class="nav-item" data-page="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>设置</span>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    杨亚茹工作台 v1.0<br>
+    数据均存储于本机浏览器
+  </div>
+</div>
+
+<!-- 主内容 -->
+<div class="app">
+
+  <!-- ===== 首页 ===== -->
+  <div class="page active" id="page-home">
+    <div class="hero">
+      <div class="greeting" id="greeting">下午好</div>
+      <div class="date" id="todayDate"></div>
+      <div class="name">杨亚茹</div>
+      <div class="quote">日拱一卒，功不唐捐。今天也要加油呀 ✨</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="stat-card">
+        <div class="label">本月支出</div>
+        <div class="value" id="monthExpense">¥0</div>
+        <div class="sub" id="monthIncome">收入 ¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">已学题目</div>
+        <div class="value" id="totalStudied">0</div>
+        <div class="sub" id="accuracy">正确率 0%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        快捷入口
+      </div>
+      <div class="quick-entry">
+        <div class="quick-item" data-go="book" data-action="add">
+          <div class="qi-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="qi-label">记一笔<small>快速记账</small></div>
+        </div>
+        <div class="quick-item" data-go="hot">
+          <div class="qi-icon" style="background:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M12 2s4 4 4 8a4 4 0 01-8 0c0-2 1-3 1-3s-3 2-3 6a6 6 0 0012 0c0-6-6-11-6-11z"/></svg></div>
+          <div class="qi-label">抖音热点<small>实时更新</small></div>
+        </div>
+        <div class="quick-item" data-go="study" data-action="practice">
+          <div class="qi-icon" style="background:var(--olive-light)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+          <div class="qi-label">开始刷题<small>每日练习</small></div>
+        </div>
+        <div class="quick-item" data-go="wrong">
+          <div class="qi-icon" style="background:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div>
+          <div class="qi-label">错题本<small>回顾复习</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        备考进度
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="studyProgress" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light)">
+        <span id="progressText">0 / 0 题</span>
+        <span id="progressPercent">0%</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2s4 4 4 8a4 4 0 01-8 0c0-2 1-3 1-3s-3 2-3 6a6 6 0 0012 0c0-6-6-11-6-11z"/></svg></div>
+        今日抖音热点 TOP5
+      </div>
+      <div id="homeHotList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 记账页 ===== -->
+  <div class="page" id="page-book">
+    <div class="book-summary">
+      <div class="item">
+        <div class="lbl">本月收入</div>
+        <div class="amt" id="bookIncome">¥0</div>
+      </div>
+      <div class="divider"></div>
+      <div class="item">
+        <div class="lbl">本月支出</div>
+        <div class="amt" id="bookExpense">¥0</div>
+      </div>
+      <div class="divider"></div>
+      <div class="item">
+        <div class="lbl">结余</div>
+        <div class="amt" id="bookBalance">¥0</div>
+      </div>
+    </div>
+
+    <div class="type-tabs" id="bookTypeTabs">
+      <div class="type-tab active" data-type="all">全部</div>
+      <div class="type-tab" data-type="expense">支出</div>
+      <div class="type-tab" data-type="income">收入</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+        账单明细
+      </div>
+      <div class="record-list" id="recordList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 抖音热点页 ===== -->
+  <div class="page" id="page-hot">
+    <div class="hot-refresh">
+      <div style="font-size:16px;font-weight:600">🔥 抖音热搜榜</div>
+      <button class="btn btn-sm btn-outline" id="refreshHot">刷新</button>
+    </div>
+    <div class="hot-update-time" id="hotUpdateTime">数据加载中...</div>
+    <div class="hot-tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span>以下为实时抖音热搜数据，点击任意条目可在抖音中查看详情。每5分钟更新一次。</span>
+    </div>
+    <div class="card">
+      <div id="hotList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 学习页 ===== -->
+  <div class="page" id="page-study">
+    <div class="study-stats">
+      <div class="study-stat">
+        <div class="num" id="ssStudied">0</div>
+        <div class="lbl">已练习</div>
+      </div>
+      <div class="study-stat">
+        <div class="num" id="ssCorrect">0</div>
+        <div class="lbl">答对</div>
+      </div>
+      <div class="study-stat">
+        <div class="num" id="ssRate">0%</div>
+        <div class="lbl">正确率</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="type-tabs" id="catFilter">
+        <div class="type-tab active" data-cat="all">全部</div>
+        <div class="type-tab" data-cat="基础护理">基础护理</div>
+        <div class="type-tab" data-cat="临床护理">临床护理</div>
+        <div class="type-tab" data-cat="急救">急救</div>
+        <div class="type-tab" data-cat="药理">药理</div>
+      </div>
+    </div>
+
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab active" data-mode="practice">练习模式</div>
+      <div class="mode-tab" data-mode="exam">模拟测试</div>
+    </div>
+
+    <div id="questionArea">
+      <!-- 题目动态渲染 -->
+    </div>
+  </div>
+
+  <!-- ===== 错题本 ===== -->
+  <div class="page" id="page-wrong">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        错题列表
+      </div>
+      <div id="wrongList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 收藏页 ===== -->
+  <div class="page" id="page-fav">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        收藏题目
+      </div>
+      <div id="favList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 创作工作台 ===== -->
+  <div class="page" id="page-create">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></div>
+        创作模板库
+      </div>
+      <div id="templateList">
+        <div class="create-template" data-tpl="douyin-hook">
+          <div class="ct-title">🎬 抖音爆款钩子脚本</div>
+          <div class="ct-desc">黄金3秒开头 + 痛点共鸣 + 反转钩子，适合知识/口播类视频</div>
+          <span class="ct-tag">15-30秒</span>
+        </div>
+        <div class="create-template" data-tpl="xhs-note">
+          <div class="ct-title">📕 小红书种草文案</div>
+          <div class="ct-desc">二极管标题法 + emoji分段 + 评论区引导，自带流量密码</div>
+          <span class="ct-tag">300-500字</span>
+        </div>
+        <div class="create-template" data-tpl="vlog">
+          <div class="ct-title">📹 Vlog递进式框架</div>
+          <div class="ct-desc">过去-现在-未来结构，适合个人IP/生活记录类</div>
+          <span class="ct-tag">1-3分钟</span>
+        </div>
+        <div class="create-template" data-tpl="knowledge">
+          <div class="ct-title">📚 干货教学脚本</div>
+          <div class="ct-desc">开门见山+摆结果+戳痛点+颠覆认知，信息密度高</div>
+          <span class="ct-tag">60秒以内</span>
+        </div>
+        <div class="create-template" data-tpl="nurse-topic">
+          <div class="ct-title">💉 护士博主选题库</div>
+          <div class="ct-desc">结合你的护士身份，生成30个爆款选题灵感</div>
+          <span class="ct-tag">选题灵感</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        自定义文案生成
+      </div>
+      <div class="form-row">
+        <label class="form-label">主题关键词</label>
+        <input class="input" id="createTopic" placeholder="如：护士备考经验、平价护肤推荐">
+      </div>
+      <div class="form-row">
+        <label class="form-label">目标平台</label>
+        <div class="mode-tabs" id="platformTabs">
+          <div class="mode-tab active" data-platform="xhs">小红书</div>
+          <div class="mode-tab" data-platform="douyin">抖音</div>
+          <div class="mode-tab" data-platform="video">视频号</div>
+        </div>
+      </div>
+      <button class="btn btn-block" id="genContent">生成文案 ✨</button>
+      <div id="createOutput"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        选题灵感库
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="ideaList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 股票雷达 ===== -->
+  <div class="page" id="page-stock">
+    <div class="stock-summary">
+      <div class="ss-title">今日涨幅榜 TOP10</div>
+      <div class="ss-count" id="stockTopCount">--</div>
+      <div class="ss-sub" id="stockUpdateTime">数据加载中...</div>
+    </div>
+
+    <div class="stock-tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>数据来源于东方财富，仅供学习参考，<strong>不构成投资建议</strong>。股市有风险，投资需谨慎。</span>
+    </div>
+
+    <div class="hot-refresh" style="margin-bottom:10px">
+      <div style="font-size:16px;font-weight:600">🔥 实时热门股</div>
+      <button class="btn btn-sm btn-outline" id="refreshStock">刷新</button>
+    </div>
+
+    <div class="card">
+      <div class="type-tabs" id="stockTypeTabs" style="margin-bottom:12px">
+        <div class="type-tab active" data-stype="hot">涨幅榜</div>
+        <div class="type-tab" data-stype="popular">人气榜</div>
+        <div class="type-tab" data-stype="rise">连涨股</div>
+      </div>
+      <div id="stockList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 设置页 ===== -->
+  <div class="page" id="page-settings">
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        个人信息
+      </div>
+      <div class="form-row">
+        <label class="form-label">姓名</label>
+        <input class="input" id="setName" placeholder="请输入姓名" value="杨亚茹">
+      </div>
+      <div class="form-row">
+        <label class="form-label">备考目标</label>
+        <input class="input" id="setGoal" placeholder="如：乡镇人事代理护士" value="乡镇人事代理护士">
+      </div>
+      <button class="btn btn-block" id="saveProfile">保存</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        数据管理
+      </div>
+      <button class="btn btn-outline btn-block" id="exportData" style="margin-bottom:10px">导出数据（JSON）</button>
+      <button class="btn btn-outline btn-block" id="importData" style="margin-bottom:10px">导入数据</button>
+      <button class="btn btn-danger btn-block" id="clearData">清空所有数据</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+
+    <div class="card" style="text-align:center;color:var(--text-mute);font-size:12px;line-height:1.8">
+      杨亚茹工作台 v1.0<br>
+      所有数据均保存在浏览器本地<br>
+      清除浏览器缓存将导致数据丢失<br>
+      请定期使用「导出数据」备份
+    </div>
+  </div>
+
+</div>
+
+<!-- 记账浮动按钮 -->
+<div class="fab" id="fab" style="display:none">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</div>
+
+<!-- 记账底部弹窗 -->
+<div class="modal-mask" id="bookModal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">记一笔</div>
+
+    <div class="mode-tabs" style="margin-bottom:16px">
+      <div class="mode-tab active" data-btype="expense">支出</div>
+      <div class="mode-tab" data-btype="income">收入</div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">金额（元）</label>
+      <input class="input" id="bookAmount" type="number" step="0.01" placeholder="0.00" style="font-size:24px;font-weight:600">
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">选择分类</label>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">备注（选填）</label>
+      <input class="input" id="bookNote" placeholder="写点啥...">
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">日期</label>
+      <input class="input" id="bookDate" type="date">
+    </div>
+
+    <button class="btn btn-block" id="saveRecord" style="margin-top:8px">保存</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   杨亚茹工作台 - 核心逻辑
+   数据存储：localStorage
+   ============================================================ */
+
+// ===== 数据存储层 =====
+const Store = {
+  KEY: 'yyr_workbench_v1',
+  data: null,
+  init(){
+    const raw = localStorage.getItem(this.KEY);
+    if(raw){
+      try{ this.data = JSON.parse(raw); }catch(e){ this.data = this.default(); }
+    }else{
+      this.data = this.default();
+    }
+  },
+  default(){
+    return {
+      profile:{ name:'杨亚茹', goal:'乡镇人事代理护士' },
+      records:[],          // 记账
+      study:{              // 学习
+        studied:[],        // 已答题目id
+        correct:[],        // 答对id
+        wrong:[],          // 错题 [{id, wrongAns, date}]
+        fav:[],            // 收藏id
+        log:[]             // 答题记录 [{id, ans, correct, date}]
+      },
+      hot:{ list:[], updateTime:null }
+    };
+  },
+  save(){
+    localStorage.setItem(this.KEY, JSON.stringify(this.data));
+  }
+};
+
+// ===== Toast 提示 =====
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+// ===== 页面导航 =====
+const pages = ['home','book','hot','study','wrong','fav','create','stock','settings'];
+const pageTitles = {
+  home:'杨亚茹工作台', book:'记一笔', hot:'抖音热点',
+  study:'备考学习', wrong:'错题本', fav:'我的收藏',
+  create:'创作工作台', stock:'股票雷达', settings:'设置'
+};
+let currentPage = 'home';
+
+function navigate(page, action){
+  currentPage = page;
+  pages.forEach(p=>{
+    document.getElementById('page-'+p).classList.toggle('active', p===page);
+  });
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.toggle('active', n.dataset.page===page);
+  });
+  document.getElementById('pageTitle').textContent = pageTitles[page] || '杨亚茹工作台';
+  closeDrawer();
+  
+  // 浮动按钮仅在记账页显示
+  document.getElementById('fab').style.display = page==='book' ? 'flex' : 'none';
+
+  // 页面初始化
+  if(page==='home') renderHome();
+  if(page==='book') renderBook();
+  if(page==='hot') renderHot();
+  if(page==='study') renderStudy();
+  if(page==='wrong') renderWrong();
+  if(page==='fav') renderFav();
+  if(page==='create') renderCreate();
+  if(page==='stock') renderStock();
+  if(page==='settings') renderSettings();
+
+  // 快捷入口动作
+  if(action==='add' && page==='book'){ openBookModal(); }
+  if(action==='practice' && page==='study'){ startPractice(); }
+}
+
+// ===== 抽屉 =====
+function openDrawer(){ document.getElementById('drawer').classList.add('show'); document.getElementById('drawerMask').classList.add('show'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('show'); document.getElementById('drawerMask').classList.remove('show'); }
+
+document.getElementById('menuBtn').addEventListener('click', openDrawer);
+document.getElementById('drawerMask').addEventListener('click', closeDrawer);
+document.querySelectorAll('.nav-item').forEach(n=>{
+  n.addEventListener('click', ()=>navigate(n.dataset.page));
+});
+
+// 快捷入口
+document.querySelectorAll('.quick-item').forEach(q=>{
+  q.addEventListener('click', ()=>{
+    navigate(q.dataset.go, q.dataset.action);
+  });
+});
+
+// ===== 首页渲染 =====
+function renderHome(){
+  const h = new Date().getHours();
+  let greeting = '凌晨好';
+  if(h>=5 && h<9) greeting='早上好';
+  else if(h>=9 && h<12) greeting='上午好';
+  else if(h>=12 && h<14) greeting='中午好';
+  else if(h>=14 && h<18) greeting='下午好';
+  else if(h>=18 && h<22) greeting='晚上好';
+  else greeting='夜深了';
+  document.getElementById('greeting').textContent = greeting + '，亚茹';
+
+  const d = new Date();
+  const week = ['日','一','二','三','四','五','六'][d.getDay()];
+  document.getElementById('todayDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${week}`;
+
+  // 本月记账
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${now.getMonth()+1}`;
+  let exp=0, inc=0;
+  Store.data.records.forEach(r=>{
+    const rd = r.date.substring(0,7);
+    if(rd===ym){
+      if(r.type==='expense') exp+=r.amount;
+      else inc+=r.amount;
+    }
+  });
+  document.getElementById('monthExpense').textContent = '¥' + exp.toFixed(2);
+  document.getElementById('monthIncome').textContent = '收入 ¥' + inc.toFixed(2);
+
+  // 学习统计
+  const studied = Store.data.study.studied.length;
+  const correct = Store.data.study.correct.length;
+  const rate = studied>0 ? Math.round(correct/studied*100) : 0;
+  document.getElementById('totalStudied').textContent = studied;
+  document.getElementById('accuracy').textContent = '正确率 ' + rate + '%';
+
+  // 备考进度
+  const totalQ = QUESTIONS.length;
+  const progress = totalQ>0 ? Math.round(studied/totalQ*100) : 0;
+  document.getElementById('studyProgress').style.width = progress + '%';
+  document.getElementById('progressText').textContent = `${studied} / ${totalQ} 题`;
+  document.getElementById('progressPercent').textContent = progress + '%';
+
+  // 首页热点TOP5
+  const hotList = document.getElementById('homeHotList');
+  if(Store.data.hot.list.length>0){
+    hotList.innerHTML = Store.data.hot.list.slice(0,5).map((h,i)=>`
+      <div class="hot-item" onclick="window.open('${h.url}','_blank')">
+        <div class="hot-rank">${i+1}</div>
+        <div class="hot-content"><div class="hot-title">${h.title}</div></div>
+        <div class="hot-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    `).join('');
+  }else{
+    hotList.innerHTML = '<div style="font-size:13px;color:var(--text-mute);padding:10px 0">点击「抖音热点」获取最新热搜</div>';
+  }
+}
+
+// ===== 记账模块 =====
+const CATEGORIES = {
+  expense:[
+    {name:'餐饮',icon:'🍜'},{name:'交通',icon:'🚌'},{name:'购物',icon:'🛍️'},
+    {name:'日用',icon:'🧴'},{name:'水果',icon:'🍎'},{name:'零食',icon:'🍪'},
+    {name:'服饰',icon:'👗'},{name:'美妆',icon:'💄'},{name:'通讯',icon:'📱'},
+    {name:'住房',icon:'🏠'},{name:'医疗',icon:'💊'},{name:'学习',icon:'📚'},
+    {name:'娱乐',icon:'🎬'},{name:'人情',icon:'🎁'},{name:'其他',icon:'📝'}
+  ],
+  income:[
+    {name:'工资',icon:'💰'},{name:'兼职',icon:'💼'},{name:'红包',icon:'🧧'},
+    {name:'理财',icon:'📈'},{name:'退款',icon:'↩️'},{name:'其他',icon:'📝'}
+  ]
+};
+
+let currentBookType = 'expense';
+let selectedCat = null;
+
+function openBookModal(){
+  document.getElementById('bookModal').classList.add('show');
+  document.getElementById('bookAmount').value='';
+  document.getElementById('bookNote').value='';
+  document.getElementById('bookDate').value = new Date().toISOString().substring(0,10);
+  selectedCat = null;
+  renderCatGrid();
+  setTimeout(()=>document.getElementById('bookAmount').focus(), 300);
+}
+function closeBookModal(){ document.getElementById('bookModal').classList.remove('show'); }
+
+function renderCatGrid(){
+  const cats = CATEGORIES[currentBookType];
+  document.getElementById('catGrid').innerHTML = cats.map((c,i)=>`
+    <div class="cat-item ${selectedCat===c.name?'selected':''}" data-cat="${c.name}" data-idx="${i}">
+      <div class="ci-icon">${c.icon}</div>
+      <div class="ci-name">${c.name}</div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.cat-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedCat = el.dataset.cat;
+      renderCatGrid();
+    });
+  });
+}
+
+// 类型切换
+document.querySelectorAll('#bookModal .mode-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#bookModal .mode-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    currentBookType = t.dataset.btype;
+    selectedCat = null;
+    renderCatGrid();
+  });
+});
+
+document.getElementById('saveRecord').addEventListener('click', ()=>{
+  const amount = parseFloat(document.getElementById('bookAmount').value);
+  if(!amount || amount<=0){ toast('请输入金额'); return; }
+  if(!selectedCat){ toast('请选择分类'); return; }
+  const note = document.getElementById('bookNote').value.trim();
+  const date = document.getElementById('bookDate').value;
+  
+  Store.data.records.unshift({
+    id: Date.now(),
+    type: currentBookType,
+    amount: amount,
+    category: selectedCat,
+    note: note,
+    date: date
+  });
+  Store.save();
+  closeBookModal();
+  toast('记录成功 ✓');
+  renderBook();
+  renderHome();
+});
+
+document.getElementById('fab').addEventListener('click', openBookModal);
+
+// 记账列表筛选
+let bookFilter = 'all';
+document.querySelectorAll('#bookTypeTabs .type-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#bookTypeTabs .type-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    bookFilter = t.dataset.type;
+    renderBook();
+  });
+});
+
+function renderBook(){
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  let exp=0, inc=0;
+  Store.data.records.forEach(r=>{
+    if(r.date.substring(0,7)===ym){
+      if(r.type==='expense') exp+=r.amount;
+      else inc+=r.amount;
+    }
+  });
+  document.getElementById('bookIncome').textContent = '¥' + inc.toFixed(2);
+  document.getElementById('bookExpense').textContent = '¥' + exp.toFixed(2);
+  document.getElementById('bookBalance').textContent = '¥' + (inc-exp).toFixed(2);
+
+  const list = document.getElementById('recordList');
+  let records = Store.data.records;
+  if(bookFilter!=='all') records = records.filter(r=>r.type===bookFilter);
+  
+  if(records.length===0){
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📝</div><div class="text">还没有记录<br>点击右下角 + 记一笔吧</div></div>';
+    return;
+  }
+
+  const catIcons = {};
+  [...CATEGORIES.expense, ...CATEGORIES.income].forEach(c=>catIcons[c.name]=c.icon);
+
+  list.innerHTML = records.map(r=>{
+    const icon = catIcons[r.category] || '📝';
+    const typeLabel = r.type==='expense' ? '支出' : '收入';
+    const sign = r.type==='expense' ? '-' : '+';
+    return `
+      <div class="record">
+        <div class="r-icon ${r.type}">${icon}</div>
+        <div class="r-info">
+          <div class="r-cat">${r.category}${r.note?' · '+r.note:''}</div>
+          <div class="r-time">${r.date} · ${typeLabel}</div>
+        </div>
+        <div class="r-amount ${r.type}">${sign}¥${r.amount.toFixed(2)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 关闭模态框
+document.getElementById('bookModal').addEventListener('click', function(e){
+  if(e.target===this) closeBookModal();
+});
+
+// ===== 抖音热点模块 =====
+async function fetchHot(){
+  document.getElementById('hotList').innerHTML = '<div class="hot-loading"><div class="spinner"></div>正在获取热搜数据...</div>';
+  document.getElementById('hotUpdateTime').textContent = '加载中...';
+  
+  try{
+    // 通过公共API获取抖音热搜
+    const resp = await fetch('https://api.vvhan.com/api/hotlist/douyinHot');
+    if(resp.ok){
+      const data = await resp.json();
+      if(data.success && data.data && data.data.length>0){
+        Store.data.hot.list = data.data.map((item,i)=>({
+          title: item.title || item.name,
+          heat: item.hot || '',
+          url: item.url || item.mobil_url || ('https://www.douyin.com/search/'+encodeURIComponent(item.title||item.name))
+        }));
+        Store.data.hot.updateTime = new Date().toLocaleString('zh-CN');
+        Store.save();
+        renderHot();
+        renderHome();
+        toast('热搜更新成功 ✓');
+        return;
+      }
+    }
+    throw new Error('API失败');
+  }catch(e){
+    // 降级：使用预置数据
+    Store.data.hot.list = FALLBACK_HOT;
+    Store.data.hot.updateTime = new Date().toLocaleString('zh-CN') + '（离线数据）';
+    Store.save();
+    renderHot();
+    renderHome();
+    toast('使用缓存数据');
+  }
+}
+
+function renderHot(){
+  const list = Store.data.hot.list;
+  const el = document.getElementById('hotList');
+  document.getElementById('hotUpdateTime').textContent = Store.data.hot.updateTime ? '更新于 ' + Store.data.hot.updateTime : '暂无数据';
+  
+  if(list.length===0){
+    el.innerHTML = '<div class="hot-empty">暂无数据<br><br><button class="btn" onclick="fetchHot()">立即获取</button></div>';
+    return;
+  }
+
+  el.innerHTML = '<div class="hot-list">' + list.map((h,i)=>`
+    <div class="hot-item" onclick="window.open('${h.url}','_blank')">
+      <div class="hot-rank">${i+1}</div>
+      <div class="hot-content">
+        <div class="hot-title">${h.title}</div>
+        ${h.heat ? '<div class="hot-heat">🔥 '+h.heat+'</div>' : ''}
+      </div>
+      <div class="hot-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+  `).join('') + '</div>';
+}
+
+document.getElementById('refreshHot').addEventListener('click', fetchHot);
+
+// ===== 题库数据 =====
+const QUESTIONS = [
+  // 基础护理
+  {id:1, cat:'基础护理', q:'关于产褥感染的护理，下述哪项不妥？', opts:['产妇取平卧位','进行床边隔离','高热病人，可物理降温','产妇出院后严格消毒所用卧具和用具'], ans:0, explain:'协助其取半卧位，利于恶露引流及炎症局限。故选A。'},
+  {id:2, cat:'基础护理', q:'某急性脑出血病人，头痛，恶心，喷射性呕吐，呼吸快而不规则，血压明显增高，意识障碍。哪项护理措施对该病人不适用？', opts:['绝对安静卧床4周以上','每2h翻身一次，预防褥疮','及时清除口腔分泌物和呕吐物','头部略抬高，稍向后仰'], ans:1, explain:'脑出血病人应绝对卧床休息，发病24～48h内避免搬动患者，患者侧卧位，头部稍抬高，以免颅内静脉回流，从而减轻脑水肿。故选B。'},
+  {id:3, cat:'基础护理', q:'破伤风患者在应用镇静药后集中采取护理措施的目的是？', opts:['提高工作效率','增强治疗护理效果','减少播散机会','减少刺激引起的抽搐'], ans:3, explain:'破伤风患者的治疗、护理等各项操作尽量集中，可在使用镇静剂30分钟内进行，以免刺激患者引起抽搐。故选D。'},
+  {id:4, cat:'临床护理', q:'脓胸患者的护理措施正确的是？', opts:['改善呼吸功能','减轻疼痛','降温','以上都是'], ans:3, explain:'脓胸患者的护理措施包括：改善呼吸功能、减轻疼痛、降温、加强营养、保持皮肤清洁、心理护理等。故选D。'},
+  {id:5, cat:'临床护理', q:'产妇，27岁。因子宫收缩过强，出现急产。对于其新生儿正确的护理措施是？', opts:['出生后半小时内喂葡萄糖水','按医嘱给维生素K1肌注','与母亲皮肤接触','新生儿抚触'], ans:1, explain:'因子宫收缩过强，出现急产，为了预防新生儿颅内出血，所以应该按医嘱给维生素K1肌注。故选B。'},
+  {id:6, cat:'基础护理', q:'测量血压时，袖带过紧会导致测量值？', opts:['偏高','偏低','无影响','不确定'], ans:1, explain:'袖带过紧使血管在未充气前已受压，测得血压偏低；袖带过松则测得偏高。故选B。'},
+  {id:7, cat:'基础护理', q:'正常成人安静状态下脉搏频率为？', opts:['40-60次/分','60-100次/分','100-120次/分','120-140次/分'], ans:1, explain:'正常成人在安静状态下脉搏频率为60-100次/分，节律规则，强弱一致。故选B。'},
+  {id:8, cat:'基础护理', q:'口腔测温时，体温计放置时间为？', opts:['1分钟','3分钟','5分钟','10分钟'], ans:1, explain:'口腔测温时将体温计水银端斜放于舌下热窝，闭口勿咬，测量3分钟。故选B。'},
+  {id:9, cat:'基础护理', q:'昏迷患者口腔护理时，下列哪项操作不妥？', opts:['协助患者侧卧或头偏向一侧','棉球要拧干','每次只夹一个棉球','开口器从门齿放入'], ans:3, explain:'开口器应从臼齿处放入，以防损伤牙齿。故选D。'},
+  {id:10, cat:'基础护理', q:'下列哪项不是压疮发生的原因？', opts:['局部组织长期受压','营养不良','皮肤经常受潮湿刺激','适当的活动'], ans:3, explain:'压疮发生的原因包括：力学因素（压力、摩擦力、剪切力）、局部潮湿或排泄物刺激、营养状况、年龄、体温升高、矫形器械使用不当等。适当的活动有助于预防压疮。故选D。'},
+  {id:11, cat:'临床护理', q:'静脉输液时，发现溶液不滴，局部肿胀，无回血，应如何处理？', opts:['局部热敷','调整针头位置','立即拔针，另选血管重新穿刺','用手挤压输液管'], ans:2, explain:'溶液不滴、局部肿胀、无回血说明针头已滑出血管外，药液注入皮下组织，应立即拔针，另选血管重新穿刺。故选C。'},
+  {id:12, cat:'急救', q:'心肺复苏时，胸外按压与人工呼吸的比例为？', opts:['15:1','15:2','30:2','30:1'], ans:2, explain:'心肺复苏时，单人或双人对成人进行 CPR，胸外按压与人工呼吸的比例均为30:2。故选C。'},
+  {id:13, cat:'急救', q:'成人胸外按压的深度应为？', opts:['1-2cm','3-4cm','5-6cm','7-8cm'], ans:2, explain:'成人胸外按压深度应为5-6cm，按压频率为100-120次/分。故选C。'},
+  {id:14, cat:'急救', q:'成人胸外按压的频率为？', opts:['60-80次/分','80-100次/分','100-120次/分','120-140次/分'], ans:2, explain:'成人胸外按压频率为100-120次/分，保证每次按压后胸廓完全回弹。故选C。'},
+  {id:15, cat:'急救', q:'溺水患者急救时，首先应？', opts:['拨打120','清理呼吸道','胸外按压','人工呼吸'], ans:1, explain:'溺水患者急救首要任务是清理呼吸道，保持呼吸道通畅，倒水处理后再进行心肺复苏。故选B。'},
+  {id:16, cat:'药理', q:'青霉素过敏反应中最严重的是？', opts:['皮肤过敏反应','血清病型反应','过敏性休克','消化道症状'], ans:2, explain:'过敏性休克是青霉素过敏反应中最严重的一种，可在用药后数秒至数分钟内发生，表现为呼吸道阻塞、循环衰竭、中枢神经系统症状等，危及生命。故选C。'},
+  {id:17, cat:'药理', q:'青霉素皮试液的标准浓度为？', opts:['10U/ml','100U/ml','200U/ml','500U/ml'], ans:2, explain:'青霉素皮试液的标准浓度为200U/ml（或500μg/ml），皮内注射0.1ml（含青霉素20U或50μg）。故选C。'},
+  {id:18, cat:'药理', q:'下列哪种药物使用前不需做过敏试验？', opts:['青霉素','链霉素','破伤风抗毒素','阿司匹林'], ans:3, explain:'青霉素、链霉素、破伤风抗毒素（TAT）、普鲁卡因、细胞色素C等使用前需做过敏试验。阿司匹林为口服药，不需做过敏试验。故选D。'},
+  {id:19, cat:'临床护理', q:'输血时发生溶血反应，首先应？', opts:['立即停止输血','通知医生','腰部封闭热敷','静脉注射碳酸氢钠'], ans:0, explain:'输血时发生溶血反应，首要措施是立即停止输血，保留静脉通道，通知医生，再给予吸氧、保暖、静脉注射碳酸氢钠等处理。故选A。'},
+  {id:20, cat:'基础护理', q:'留置导尿管的患者，尿袋位置应？', opts:['高于膀胱','低于膀胱','与膀胱同高','位置无要求'], ans:1, explain:'留置导尿管患者的尿袋位置应低于膀胱，防止尿液逆流引起逆行感染。故选B。'},
+  {id:21, cat:'临床护理', q:'下列哪项是洋地黄中毒的表现？', opts:['心率加快','恶心呕吐、黄视','血压升高','脉搏有力'], ans:1, explain:'洋地黄中毒的主要表现包括：胃肠道反应（恶心呕吐）、神经系统症状（黄视、绿视）、心脏毒性（各种心律失常）。故选B。'},
+  {id:22, cat:'急救', q:'煤气中毒患者应立即采取的措施是？', opts:['就地抢救','开窗通风、移至空气新鲜处','给予口服热水','头部冷敷'], ans:1, explain:'煤气中毒患者应立即开窗通风，将患者移至空气新鲜处，保持呼吸道通畅，给予吸氧，严重者送医。故选B。'},
+  {id:23, cat:'基础护理', q:'鼻饲时，胃管插入长度约为？', opts:['15-25cm','25-35cm','45-55cm','65-75cm'], ans:2, explain:'鼻饲胃管插入长度一般为45-55cm（相当于前额发际至胸骨剑突的距离）。故选C。'},
+  {id:24, cat:'临床护理', q:'下列哪项是输液的常见并发症？', opts:['发热反应','急性肺水肿','静脉炎','以上都是'], ans:3, explain:'输液常见并发症包括：发热反应、急性肺水肿（循环负荷过重）、静脉炎、空气栓塞等。故选D。'},
+  {id:25, cat:'基础护理', q:'下列哪项属于医院一级护理的对象？', opts:['病情危重','病情较重但生活能自理','生活完全不能自理','康复期患者'], ans:0, explain:'一级护理适用于病情危重、需要严格卧床休息、生活完全不能自理的患者。每小时巡视一次。故选A。'},
+  {id:26, cat:'药理', q:'静脉注射药物时，下列哪项操作错误？', opts:['严格无菌操作','选择粗直血管','注射速度宜快','注意观察反应'], ans:2, explain:'静脉注射应根据药物性质调整注射速度，一般为缓慢注射，尤其强心苷类药物需缓慢注射，避免注射过快引起不良反应。故选C。'},
+  {id:27, cat:'临床护理', q:'胸腔闭式引流时，水封瓶长管应插入水面下？', opts:['1-2cm','3-4cm','5-6cm','7-8cm'], ans:1, explain:'胸腔闭式引流时，水封瓶长管应插入水面下3-4cm，过深影响引流，过浅易致空气进入胸腔。故选B。'},
+  {id:28, cat:'急救', q:'电击伤患者急救，首先应？', opts:['心肺复苏','切断电源','通知医生','静脉补液'], ans:1, explain:'电击伤患者急救，首先应迅速切断电源，确认现场安全后方可接触患者，再进行心肺复苏等急救措施。故选B。'},
+  {id:29, cat:'临床护理', q:'外科手术前备皮时间一般在？', opts:['术前1天','术前2天','术前3天','术前1周'], ans:0, explain:'外科手术前备皮一般在术前1天进行，包括清洁皮肤、剃除手术区域毛发等，以减少术后感染。故选A。'},
+  {id:30, cat:'基础护理', q:'体温在39℃以上，24h内温差不超过1℃，此热型为？', opts:['稽留热','弛张热','间歇热','不规则热'], ans:0, explain:'稽留热特点为体温持续在39-40℃，24h内温差不超过1℃，常见于大叶性肺炎、伤寒等。故选A。'},
+];
+
+// 备用热搜数据（API不可用时降级使用）
+const FALLBACK_HOT = [
+  {title:'复盘一周穿搭思路',heat:'1191万',url:'https://www.douyin.com/search/复盘一周穿搭思路'},
+  {title:'台网红馆长反对毒油事件',heat:'1190万',url:'https://www.douyin.com/search/台网红馆长反对毒油事件'},
+  {title:'红树林保护获亮眼成绩',heat:'1170万',url:'https://www.douyin.com/search/红树林保护获亮眼成绩'},
+  {title:'佩德里西班牙小伙体验中国文化',heat:'1168万',url:'https://www.douyin.com/search/佩德里西班牙小伙体验中国文化'},
+  {title:'詹姆斯加盟76人真能拿冠军吗',heat:'1109万',url:'https://www.douyin.com/search/詹姆斯加盟76人'},
+  {title:'甘肃渭源山洪已致10死23伤',heat:'1107万',url:'https://www.douyin.com/search/甘肃渭源山洪'},
+  {title:'初中生也能看懂的挂谷猜想解析',heat:'962万',url:'https://www.douyin.com/search/挂谷猜想解析'},
+  {title:'贵州村超2026圆满落幕',heat:'953万',url:'https://www.douyin.com/search/贵州村超2026'},
+  {title:'深圳的风有多大',heat:'945万',url:'https://www.douyin.com/search/深圳的风有多大'},
+  {title:'日本为找稀土开始拆解废旧空调',heat:'923万',url:'https://www.douyin.com/search/日本拆解废旧空调'},
+  {title:'永州队争议世界波申诉成功',heat:'923万',url:'https://www.douyin.com/search/永州队申诉'},
+  {title:'寰际亚洲职业赛成都站',heat:'921万',url:'https://www.douyin.com/search/寰际亚洲职业赛'},
+  {title:'网传西藏千年古碉遭强拆系谣言',heat:'918万',url:'https://www.douyin.com/search/西藏古碉谣言'},
+  {title:'演员王建隆去世',heat:'914万',url:'https://www.douyin.com/search/演员王建隆去世'},
+  {title:'中国女粉丝遭GMM工作人员暴力对待',heat:'904万',url:'https://www.douyin.com/search/GMM工作人员暴力对待'},
+  {title:'张煜东回应录音争议',heat:'901万',url:'https://www.douyin.com/search/张煜东录音争议'},
+  {title:'侯明昊成都演唱会',heat:'885万',url:'https://www.douyin.com/search/侯明昊成都演唱会'},
+  {title:'周星驰说我的青春也献给了你们',heat:'881万',url:'https://www.douyin.com/search/周星驰青春'},
+  {title:'小苹果阿姨感谢网友关心',heat:'877万',url:'https://www.douyin.com/search/小苹果阿姨'},
+  {title:'谁还没跳ACAI拖拉机舞',heat:'861万',url:'https://www.douyin.com/search/ACAI拖拉机舞'},
+  {title:'台风红霞登陆广东',heat:'804万',url:'https://www.douyin.com/search/台风红霞登陆广东'},
+  {title:'八仙反超功夫女足成单日票房冠军',heat:'799万',url:'https://www.douyin.com/search/八仙功夫女足票房'},
+  {title:'AI的回答让我重新理解活着',heat:'769万',url:'https://www.douyin.com/search/AI重新理解活着'},
+  {title:'门前大桥下游过两只猫',heat:'767万',url:'https://www.douyin.com/search/门前大桥下游过两只猫'},
+  {title:'盘点各大奶茶店镇店爆款产品',heat:'766万',url:'https://www.douyin.com/search/奶茶店爆款产品'},
+  {title:'高精力哥哥如何哄睡三胞胎妹妹',heat:'766万',url:'https://www.douyin.com/search/哄睡三胞胎妹妹'},
+];
+
+// ===== 学习模块 =====
+let studyMode = 'practice';   // practice | exam
+let studyCat = 'all';
+let studyQueue = [];          // 当前题目队列
+let studyIdx = 0;             // 当前题目索引
+let selectedAns = null;       // 当前选择的答案
+let answered = false;         // 是否已作答
+let examScore = 0;            // 模拟测试得分
+
+function getFilteredQuestions(){
+  let qs = studyCat==='all' ? [...QUESTIONS] : QUESTIONS.filter(q=>q.cat===studyCat);
+  return qs.sort(()=>Math.random()-0.5);
+}
+
+function startPractice(){
+  studyQueue = getFilteredQuestions();
+  if(studyQueue.length===0){ toast('暂无题目'); return; }
+  studyIdx = 0;
+  renderQuestion();
+}
+
+function startExam(){
+  studyQueue = getFilteredQuestions().slice(0, 20);  // 随机取20题
+  if(studyQueue.length===0){ toast('暂无题目'); return; }
+  studyIdx = 0;
+  examScore = 0;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  if(studyIdx >= studyQueue.length){
+    renderStudyResult();
+    return;
+  }
+  const q = studyQueue[studyIdx];
+  selectedAns = null;
+  answered = false;
+
+  const studied = Store.data.study.studied.length;
+  const correct = Store.data.study.correct.length;
+  const rate = studied>0 ? Math.round(correct/studied*100) : 0;
+  document.getElementById('ssStudied').textContent = studied;
+  document.getElementById('ssCorrect').textContent = correct;
+  document.getElementById('ssRate').textContent = rate + '%';
+
+  const progress = Math.round((studyIdx) / studyQueue.length * 100);
+  
+  document.getElementById('questionArea').innerHTML = `
+    <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-bottom:14px">
+      <span>第 ${studyIdx+1} / ${studyQueue.length} 题</span>
+      ${studyMode==='exam' ? '<span>模拟测试</span>' : '<span>练习模式</span>'}
+    </div>
+    <div class="question-card">
+      <div class="q-meta">
+        <span class="q-tag">${q.cat}</span>
+        <span class="q-index">题号 #${q.id}</span>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-options" id="qOptions">
+        ${q.opts.map((o,i)=>`
+          <div class="q-option" data-idx="${i}">
+            <div class="opt-label">${String.fromCharCode(65+i)}</div>
+            <div>${o}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="q-explain" id="qExplain">
+        <div class="ans-tag ${answered?'correct':'wrong'}">${answered?'回答正确':'回答错误'}</div>
+        正确答案：<strong>${String.fromCharCode(65+q.ans)}</strong><br>
+        ${q.explain}
+        <div style="margin-top:8px">
+          <button class="btn btn-sm btn-outline" id="favBtn">${Store.data.study.fav.includes(q.id)?'★ 已收藏':'☆ 收藏'}</button>
+        </div>
+      </div>
+      <div class="q-nav">
+        ${studyMode==='practice' ? 
+          (Store.data.study.studied.includes(q.id) ? '<button class="btn btn-outline" id="prevBtn">上一题</button>' : '') :
+          ''
+        }
+        <button class="btn" id="nextBtn">${studyIdx+1>=studyQueue.length?'查看结果':'下一题 →'}</button>
+      </div>
+    </div>
+  `;
+
+  document.querySelectorAll('.q-option').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      if(answered) return;
+      selectedAns = parseInt(el.dataset.idx);
+      answerQuestion(q, selectedAns);
+    });
+  });
+
+  const favBtn = document.getElementById('favBtn');
+  if(favBtn){
+    favBtn.addEventListener('click', ()=>{
+      const idx = Store.data.study.fav.indexOf(q.id);
+      if(idx>=0){ Store.data.study.fav.splice(idx,1); toast('已取消收藏'); }
+      else{ Store.data.study.fav.push(q.id); toast('已收藏 ✓'); }
+      Store.save();
+      renderQuestion();
+    });
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    if(!answered && studyMode==='practice'){
+      toast('请先作答');
+      return;
+    }
+    studyIdx++;
+    renderQuestion();
+  });
+
+  const prevBtn = document.getElementById('prevBtn');
+  if(prevBtn){
+    prevBtn.addEventListener('click', ()=>{
+      if(studyIdx>0){ studyIdx--; renderQuestion(); }
+    });
+  }
+}
+
+function answerQuestion(q, selected){
+  answered = true;
+  const isCorrect = selected === q.ans;
+  
+  // 记录答题
+  const s = Store.data.study;
+  if(!s.studied.includes(q.id)){
+    s.studied.push(q.id);
+  }
+  s.log.unshift({id:q.id, ans:selected, correct:isCorrect, date:new Date().toISOString()});
+  if(s.log.length>200) s.log = s.log.slice(0,200);
+  
+  if(isCorrect){
+    if(!s.correct.includes(q.id)) s.correct.push(q.id);
+    // 从错题本移除
+    s.wrong = s.wrong.filter(w=>w.id!==q.id);
+    if(studyMode==='exam') examScore++;
+  }else{
+    if(!s.correct.includes(q.id) || true){
+      // 添加到错题本
+      const exist = s.wrong.find(w=>w.id===q.id);
+      if(exist){
+        exist.wrongAns = selected;
+        exist.date = new Date().toISOString();
+      }else{
+        s.wrong.push({id:q.id, wrongAns:selected, date:new Date().toISOString()});
+      }
+    }
+  }
+  Store.save();
+
+  // 更新UI
+  document.querySelectorAll('.q-option').forEach((el,i)=>{
+    el.classList.add('disabled');
+    if(i===q.ans) el.classList.add('correct');
+    if(i===selected && !isCorrect) el.classList.add('wrong');
+  });
+
+  const explain = document.getElementById('qExplain');
+  const tag = explain.querySelector('.ans-tag');
+  tag.className = 'ans-tag ' + (isCorrect?'correct':'wrong');
+  tag.textContent = isCorrect ? '回答正确 ✓' : '回答错误 ✗';
+  explain.classList.add('show');
+}
+
+function renderStudyResult(){
+  const studied = Store.data.study.studied.length;
+  const correct = Store.data.study.correct.length;
+  const rate = studied>0 ? Math.round(correct/studied*100) : 0;
+  document.getElementById('ssStudied').textContent = studied;
+  document.getElementById('ssCorrect').textContent = correct;
+  document.getElementById('ssRate').textContent = rate + '%';
+
+  let result = '';
+  if(studyMode==='exam'){
+    const score = Math.round(examScore/studyQueue.length*100);
+    let comment = '';
+    if(score>=90) comment='太棒了！你已具备扎实的护理知识基础 🎉';
+    else if(score>=75) comment='不错哦！继续加油就能稳稳过关 💪';
+    else if(score>=60) comment='及格了，但还需要多练习 📚';
+    else comment='继续努力，多刷题就能进步 🌱';
+    
+    result = `
+      <div class="card" style="text-align:center;padding:30px 20px">
+        <div style="font-size:48px;margin-bottom:12px">${score>=75?'🏆':score>=60?'📝':'💪'}</div>
+        <div style="font-size:14px;color:var(--text-light);margin-bottom:8px">模拟测试完成</div>
+        <div style="font-size:36px;font-weight:700;color:var(--olive-dark);margin-bottom:4px">${examScore}/${studyQueue.length}</div>
+        <div style="font-size:20px;font-weight:600;color:var(--olive);margin-bottom:12px">${score}分</div>
+        <div style="font-size:13px;color:var(--text-light);line-height:1.6">${comment}</div>
+      </div>
+    `;
+  }
+
+  document.getElementById('questionArea').innerHTML = result + `
+    <button class="btn btn-block" onclick="startPractice()" style="margin-bottom:10px">再来一轮练习</button>
+    <button class="btn btn-outline btn-block" onclick="startExam()">模拟测试</button>
+  `;
+}
+
+function renderStudy(){
+  if(studyQueue.length===0){
+    const studied = Store.data.study.studied.length;
+    const correct = Store.data.study.correct.length;
+    const rate = studied>0 ? Math.round(correct/studied*100) : 0;
+    document.getElementById('ssStudied').textContent = studied;
+    document.getElementById('ssCorrect').textContent = correct;
+    document.getElementById('ssRate').textContent = rate + '%';
+
+    document.getElementById('questionArea').innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">📚</div>
+        <div class="text">乡镇人事代理护士备考题库<br>共 ${QUESTIONS.length} 题，涵盖基础护理、临床护理、急救、药理</div>
+        <button class="btn" onclick="startPractice()" style="margin-top:8px">开始练习</button>
+        <button class="btn btn-outline" onclick="startExam()" style="margin-top:8px">模拟测试（20题）</button>
+      </div>
+    `;
+  }
+}
+
+// 分类筛选
+document.querySelectorAll('#catFilter .type-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#catFilter .type-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    studyCat = t.dataset.cat;
+    if(studyQueue.length>0) startPractice();
+  });
+});
+
+// 模式切换
+document.querySelectorAll('#modeTabs .mode-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#modeTabs .mode-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    studyMode = t.dataset.mode;
+    if(studyMode==='exam') startExam();
+    else startPractice();
+  });
+});
+
+// ===== 错题本 =====
+function renderWrong(){
+  const list = document.getElementById('wrongList');
+  const wrongs = Store.data.study.wrong;
+  if(wrongs.length===0){
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🎉</div><div class="text">还没有错题<br>继续保持！</div></div>';
+    return;
+  }
+  list.innerHTML = wrongs.map(w=>{
+    const q = QUESTIONS.find(x=>x.id===w.id);
+    if(!q) return '';
+    return `
+      <div class="wrong-item">
+        <div class="wi-q">${q.q}</div>
+        <div class="wi-a">你的答案：<strong style="color:var(--danger)">${String.fromCharCode(65+w.wrongAns)}. ${q.opts[w.wrongAns]}</strong></div>
+        <div class="wi-a">正确答案：<strong style="color:var(--olive-dark)">${String.fromCharCode(65+q.ans)}. ${q.opts[q.ans]}</strong></div>
+        <div class="wi-a" style="margin-top:6px;color:var(--text-mute);font-size:11px">${q.explain}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== 收藏 =====
+function renderFav(){
+  const list = document.getElementById('favList');
+  const favs = Store.data.study.fav;
+  if(favs.length===0){
+    list.innerHTML = '<div class="empty-state"><div class="emoji">⭐</div><div class="text">还没有收藏题目<br>在答题时点击收藏即可</div></div>';
+    return;
+  }
+  list.innerHTML = favs.map(id=>{
+    const q = QUESTIONS.find(x=>x.id===id);
+    if(!q) return '';
+    return `
+      <div class="wrong-item fav-item">
+        <div class="wi-q"><span class="star">★</span><span>${q.q}</span></div>
+        <div class="wi-a">正确答案：<strong>${String.fromCharCode(65+q.ans)}. ${q.opts[q.ans]}</strong></div>
+        <div class="wi-a" style="margin-top:6px;color:var(--text-mute);font-size:11px">${q.explain}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== 创作工作台 =====
+const TEMPLATES = {
+  'douyin-hook':{
+    title:'抖音爆款钩子脚本',
+    generate:(topic)=>{
+      topic = topic || '护士备考经验';
+      return `<span class="section">🎯 黄金3秒开头（钩子）</span>"我备考护士资格证的时候，差点被这道题坑哭……"（停顿1秒）
+"你是不是也以为答案选A？错！正确答案是C！"
+<span class="section">📖 痛点共鸣（5-10秒）</span>关于「${topic}」，90%的人都会踩这3个坑：
+1. 只刷题不总结 → 做了1000题还是错同一种
+2. 死记硬背 → 考场一紧张全忘
+3. 忽略案例分析 → 这才是丢分大头
+<span class="section">💡 反转钩子（10-15秒）</span>直到我发现了这个「三遍刷题法」：
+第一遍：限时做，错题标记
+第二遍：只做错题，分析为什么错
+第三遍：考前3天，把所有错题讲给别人听
+→ 能讲清楚，才是真会了
+<span class="section">🔥 结尾引导</span>"评论区扣 1，我下期发详细笔记模板"
+"关注我，一个踩过所有坑的过来人"`;
+    }
+  },
+  'xhs-note':{
+    title:'小红书种草文案',
+    generate:(topic)=>{
+      topic = topic || '护士备考神器';
+      return `<span class="section">📌 5个标题备选</span>
+1. 救命！这个${topic}也太绝了吧😭
+2. 护士姐妹都给我冲！${topic}真实测评✨
+3. 被问了100遍的${topic}，终于出教程了！
+4. ${topic}踩雷vs真香，看完少花500块💰
+5. 准备护考的姐妹！${topic}必须知道！
+<span class="section">📝 正文模板</span>
+姐妹们！！今天必须来安利这个${topic}👇
+✨ 使用前 VS 使用后
+之前：备考焦虑到失眠，刷题效率低
+之后：每天2小时高效学习，正确率up⬆️
+💡 3个使用小tips：
+1⃣ 搭配真题使用效果翻倍
+2⃣ 碎片时间也能学（通勤/午休）
+3⃣ 错题一定要二刷！
+⚠️ 注意事项：
+× 不要贪多，每天1-2章就够
+× 结合教材，别只看总结
+<span class="section">#标签</span>
+#${topic} #护士备考 #护考经验分享 #学习打卡 #备考神器`;
+    }
+  },
+  'vlog':{
+    title:'Vlog递进式框架',
+    generate:(topic)=>{
+      topic = topic || '护士的一天';
+      return `<span class="section">⏰ 过去（开场）</span>
+"一年前的我，还在为考试焦虑到哭……"
+"今天，我成了自己曾经最羡慕的人"
+<span class="section">📷 现在（主体）</span>
+${topic}的真实记录：
+- 06:30 起床，复习昨晚错题
+- 08:00 到科室，交接班
+- 12:00 午休刷20道题
+- 18:00 下班，整理今日收获
+- 22:00 睡前复盘+明日计划
+<span class="section">🚀 未来（结尾）</span>
+"从备考到上岗，这条路我走了187天"
+"如果你也在路上，别放弃，我们顶峰相见"
+<span class="section">💡 拍摄建议</span>
+- 用手机支架固定拍摄，第一人称视角更真实
+- 每个场景15-30秒，总时长1-3分钟
+- 配乐选轻快治愈系，节奏不要太快`;
+    }
+  },
+  'knowledge':{
+    title:'干货教学脚本',
+    generate:(topic)=>{
+      topic = topic || '血压测量技巧';
+      return `<span class="section">⚡ 开门见山（3秒）</span>
+"关于${topic}，教科书没告诉你的3个细节"
+<span class="section">🏆 摆结果（5秒）</span>
+"掌握这3点，操作考试稳拿满分"
+<span class="section">📌 戳痛点（10秒）</span>
+你是不是也：
+- 测出来数值忽高忽低？
+- 不知道袖带松紧度？
+- 被老师挑过毛病？
+<span class="section">💡 颠覆认知（20秒）</span>
+细节1：袖带过紧→数值偏低，过松→偏高
+✅ 正确：能塞进1-2指
+细节2：手臂位置要齐平心脏
+✅ 太高→偏低，太低→偏高
+细节3：第一次测量后，等1分钟再测第二次
+✅ 排放残存血流，数据更准
+<span class="section">🎯 总结</span>
+"3个细节记住了吗？点收藏，考试前再复习一遍"`;
+    }
+  },
+  'nurse-topic':{
+    title:'护士博主选题灵感（30个）',
+    generate:()=>{
+      const topics = [
+        '【备考类】护考最后30天逆袭时间表',
+        '【备考类】5道必考的案例分析题',
+        '【备考类】我用的免费刷题App对比',
+        '【备考类】错题本该怎么整理才有效',
+        '【备考类】考前一晚如何高效复习',
+        '【实操类】静脉穿刺无痛技巧',
+        '【实操类】肌肉注射部位选择图解',
+        '【实操类】导尿术操作流程口诀',
+        '【实操类】心肺复苏2026最新标准',
+        '【实操类】吸痰操作注意事项',
+        '【职场类】新护士第一年避坑指南',
+        '【职场类】夜班怎么熬不伤身',
+        '【职场类】和医生沟通的3个技巧',
+        '【职场类】乡镇卫生院工作真实分享',
+        '【职场类】护士资格证注册流程',
+        '【生活类】护士的午餐都吃啥',
+        '【生活类】下夜班如何快速恢复',
+        '【生活类】护士常备的小物件',
+        '【生活类】如何平衡备考和工作',
+        '【生活类】护士的护肤routine',
+        '【科普类】发烧多少度该吃退烧药',
+        '【科普类】高血压患者饮食禁忌',
+        '【科普类】糖尿病足的早期信号',
+        '【科普类】破伤风针什么时候打',
+        '【科普类】输液速度为什么有快有慢',
+        '【情感类】第一次给病人抽血的经历',
+        '【情感类】被病人骂哭后我学到了什么',
+        '【情感类】护士节收到的最暖礼物',
+        '【情感类】带教老师说过最难忘的话',
+        '【情感类】为什么我还在坚持做护士'
+      ];
+      return topics.map((t,i)=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5">${i+1}. ${t}</div>`).join('');
+    }
+  }
+};
+
+let currentPlatform = 'xhs';
+document.querySelectorAll('#platformTabs .mode-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#platformTabs .mode-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    currentPlatform = t.dataset.platform;
+  });
+});
+
+document.querySelectorAll('.create-template').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const tpl = TEMPLATES[el.dataset.tpl];
+    if(!tpl) return;
+    const topic = document.getElementById('createTopic').value.trim();
+    document.getElementById('createOutput').innerHTML = `
+      <div class="script-output">${tpl.generate(topic)}</div>
+      <button class="copy-btn" onclick="copyScript()">📋 复制文案</button>
+    `;
+    document.getElementById('createOutput').scrollIntoView({behavior:'smooth'});
+    toast('文案已生成 ✓');
+  });
+});
+
+document.getElementById('genContent').addEventListener('click', ()=>{
+  const topic = document.getElementById('createTopic').value.trim();
+  if(!topic){ toast('请输入主题关键词'); return; }
+  const tpl = currentPlatform==='douyin' ? TEMPLATES['douyin-hook'] :
+              currentPlatform==='xhs' ? TEMPLATES['xhs-note'] :
+              TEMPLATES['vlog'];
+  document.getElementById('createOutput').innerHTML = `
+    <div class="script-output">${tpl.generate(topic)}</div>
+    <button class="copy-btn" onclick="copyScript()">📋 复制文案</button>
+  `;
+  toast('文案已生成 ✓');
+});
+
+function copyScript(){
+  const text = document.querySelector('.script-output').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    toast('已复制到剪贴板 ✓');
+  }).catch(()=>{
+    // 降级方案
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('已复制 ✓');
+  });
+}
+
+function renderCreate(){
+  // 选题灵感
+  const ideas = [
+    '护士备考30天逆袭','夜班生存指南','护考案例分析',
+    '静脉穿刺技巧','护士薪资真相','护考错题整理法',
+    '乡镇卫生院日常','护士穿搭分享','备考时间管理',
+    '护考免费资源'
+  ];
+  const ideaEl = document.getElementById('ideaList');
+  if(ideaEl && !ideaEl.dataset.loaded){
+    ideaEl.innerHTML = ideas.map(i=>`
+      <span style="padding:6px 14px;background:var(--olive-soft);color:var(--olive-dark);border-radius:16px;font-size:12px;cursor:pointer" onclick="document.getElementById('createTopic').value='${i}';toast('已填入：${i}')">${i}</span>
+    `).join('');
+    ideaEl.dataset.loaded = '1';
+  }
+}
+
+// ===== 股票雷达 =====
+let stockType = 'hot';
+async function fetchStock(){
+  const el = document.getElementById('stockList');
+  el.innerHTML = '<div class="hot-loading"><div class="spinner"></div>正在获取实时行情...</div>';
+  document.getElementById('stockUpdateTime').textContent = '加载中...';
+
+  // 东方财富实时行情API（免费，无需认证）
+  const urls = {
+    hot: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
+    popular: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f10&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17',
+    rise: 'https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10&po=1&np=1&fltt=2&invt=2&fid=f4&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f2,f3,f4,f5,f6,f7,f12,f14,f15,f16,f17'
+  };
+
+  try{
+    const resp = await fetch(urls[stockType] + '&_t=' + Date.now());
+    const data = await resp.json();
+    if(data.data && data.data.diff && data.data.diff.length>0){
+      renderStockList(data.data.diff);
+      const now = new Date();
+      document.getElementById('stockUpdateTime').textContent = '更新于 ' + now.toLocaleTimeString('zh-CN');
+      document.getElementById('stockTopCount').textContent = data.data.diff.length + ' 只';
+      toast('行情更新成功 ✓');
+    }else{
+      throw new Error('无数据');
+    }
+  }catch(e){
+    // 降级：使用预置数据
+    renderStockList(FALLBACK_STOCK);
+    document.getElementById('stockUpdateTime').textContent = '使用缓存数据（网络受限）';
+    document.getElementById('stockTopCount').textContent = '10 只';
+    toast('使用缓存数据');
+  }
+}
+
+function renderStockList(list){
+  const el = document.getElementById('stockList');
+  const colors = ['#e74c3c','#e67e22','#f39c12','#27ae60','#3498db','#9b59b6','#1abc9c','#34495e','#e74c3c','#e67e22'];
+  el.innerHTML = list.map((s,i)=>{
+    const name = s.f14 || s.name;
+    const code = s.f12 || s.code;
+    const price = s.f2 || s.price;
+    const pct = s.f3 || s.pct;
+    const change = s.f4 || s.change;
+    const volume = s.f5 || s.volume;
+    const isUp = pct >= 0;
+    const pctStr = (isUp?'+':'') + pct.toFixed(2) + '%';
+    const changeStr = (isUp?'+':'') + change.toFixed(2);
+    // 简单技术面分析
+    let analysis = '';
+    let tag = '';
+    if(pct >= 9.8){ analysis = '涨停板，注意次日分化风险'; tag = 'risk'; }
+    else if(pct >= 5){ analysis = '强势上涨，关注量能持续性'; tag = 'buy'; }
+    else if(pct >= 2){ analysis = '温和上涨，趋势向好'; tag = 'watch'; }
+    else if(pct >= 0){ analysis = '小幅波动，观望为主'; tag = 'watch'; }
+    else if(pct >= -5){ analysis = '下跌调整，等待企稳'; tag = 'risk'; }
+    else { analysis = '大幅下跌，注意风险'; tag = 'risk'; }
+
+    return `
+      <div class="stock-item" onclick="showStockDetail('${code}','${name}',${price},${pct},${change})">
+        <div class="stock-rank-badge" style="background:${colors[i]||'#999'}">${i+1}</div>
+        <div class="stock-info">
+          <div class="stock-name">${name}</div>
+          <div class="stock-code">${code} · ${analysis}</div>
+        </div>
+        <div class="stock-price">
+          <div class="stock-change ${isUp?'up':'down'}">${price.toFixed(2)}</div>
+          <div class="stock-pct ${isUp?'up':'down'}">${pctStr}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showStockDetail(code, name, price, pct, change){
+  const isUp = pct >= 0;
+  const pctStr = (isUp?'+':'') + pct.toFixed(2) + '%';
+  const changeStr = (isUp?'+':'') + change.toFixed(2);
+  let analysis = '';
+  let tag = '';
+  if(pct >= 9.8){ analysis = '涨停板'; tag = 'risk'; }
+  else if(pct >= 5){ analysis = '强势买点'; tag = 'buy'; }
+  else if(pct >= 2){ analysis = '值得关注'; tag = 'watch'; }
+  else if(pct >= 0){ analysis = '观望'; tag = 'watch'; }
+  else { analysis = '风险提示'; tag = 'risk'; }
+
+  toast(`${name} ${price.toFixed(2)} ${pctStr}`);
+}
+
+document.getElementById('refreshStock').addEventListener('click', fetchStock);
+document.querySelectorAll('#stockTypeTabs .type-tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('#stockTypeTabs .type-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    stockType = t.dataset.stype;
+    fetchStock();
+  });
+});
+
+// 预置股票数据（API不可用时降级）
+const FALLBACK_STOCK = [
+  {f14:'贵州茅台',f12:'600519',f2:1689.50,f3:2.35,f4:38.80,f5:23456},
+  {f14:'宁德时代',f12:'300750',f2:215.60,f3:5.67,f4:11.58,f5:45678},
+  {f14:'比亚迪',f12:'002594',f2:268.45,f3:3.21,f4:8.35,f5:32145},
+  {f14:'隆基绿能',f12:'601012',f2:23.78,f3:4.56,f4:1.04,f5:56789},
+  {f14:'阳光电源',f12:'300274',f2:112.30,f3:6.78,f4:7.12,f5:12345},
+  {f14:'通威股份',f12:'600438',f2:28.90,f3:3.45,f4:0.96,f5:23456},
+  {f14:'美的集团',f12:'000333',f2:78.56,f3:1.89,f4:1.46,f5:34567},
+  {f14:'五粮液',f12:'000858',f2:156.78,f3:2.67,f4:4.08,f5:45678},
+  {f14:'招商银行',f12:'600036',f2:38.45,f3:1.23,f4:0.47,f5:67890},
+  {f14:'恒瑞医药',f12:'600276',f2:48.90,f3:4.12,f4:1.93,f5:12345}
+];
+
+function renderStock(){
+  if(document.getElementById('stockList').children.length === 0){
+    fetchStock();
+  }
+}
+
+// ===== 设置 =====
+function renderSettings(){
+  document.getElementById('setName').value = Store.data.profile.name;
+  document.getElementById('setGoal').value = Store.data.profile.goal;
+}
+
+document.getElementById('saveProfile').addEventListener('click', ()=>{
+  Store.data.profile.name = document.getElementById('setName').value || '杨亚茹';
+  Store.data.profile.goal = document.getElementById('setGoal').value || '乡镇人事代理护士';
+  Store.save();
+  toast('保存成功 ✓');
+});
+
+document.getElementById('exportData').addEventListener('click', ()=>{
+  const data = JSON.stringify(Store.data, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `杨亚茹工作台_备份_${new Date().toISOString().substring(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('导出成功 ✓');
+});
+
+document.getElementById('importData').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      Store.data = data;
+      Store.save();
+      toast('导入成功 ✓');
+      navigate('home');
+    }catch(err){
+      toast('导入失败，文件格式错误');
+    }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('clearData').addEventListener('click', ()=>{
+  if(confirm('确定要清空所有数据吗？此操作不可恢复！')){
+    Store.data = Store.default();
+    Store.save();
+    toast('已清空所有数据');
+    setTimeout(()=>location.reload(), 1000);
+  }
+});
+
+// ===== 初始化 =====
+Store.init();
+
+// 如果还没有热点数据，预置降级数据
+if(Store.data.hot.list.length===0){
+  Store.data.hot.list = FALLBACK_HOT;
+  Store.data.hot.updateTime = '预置数据 · 点击刷新获取最新';
+  Store.save();
+}
+
+// 启动
+navigate('home');
+
+// 自动刷新热搜（打开热点页时）
+let hotFetched = false;
+const origNavHot = navigate;
+// 首次打开自动拉取一次最新热搜
+setTimeout(()=>{ if(!hotFetched){ hotFetched=true; fetchHot(); } }, 1500);
+
+</script>
+</body>
+</html>
