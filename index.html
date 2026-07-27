@@ -2392,24 +2392,57 @@ function renderWatchList(list){
       actionTag = '<span class="analysis-tag watch">关注中</span>';
     }
 
+    // 同花顺跳转链接（amihexin协议：沪市前缀10_，深市前缀00_）
+    const thsPrefix = w.market === '1' ? '10_' : '00_';
+    const thsLink = `amihexin://hq/${thsPrefix}${w.code}`;
+    // 备用：同花顺网页版（amihexin失败时降级）
+    const thsWebLink = `https://stockpage.10jqka.com.cn/${w.code}/`;
+
     return `
-      <div class="stock-item" style="padding:10px 0">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <span style="font-size:14px;font-weight:600">${w.name}</span>
-            <span style="font-size:11px;color:var(--text-mute)">${w.code}</span>
-            ${actionTag}
+      <div class="stock-item" style="padding:10px 0;flex-direction:column;align-items:stretch;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-size:14px;font-weight:600">${w.name}</span>
+              <span style="font-size:11px;color:var(--text-mute)">${w.code}</span>
+              ${actionTag}
+            </div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:2px">${w.note}</div>
+            ${pnlStr ? `<div style="font-size:12px;font-weight:600" class="stock-pct ${pnlClass}">盈亏：${pnlStr}</div>` : ''}
           </div>
-          <div style="font-size:12px;color:var(--text-light);margin-bottom:2px">${w.note}</div>
-          ${pnlStr ? `<div style="font-size:12px;font-weight:600" class="stock-pct ${pnlClass}">盈亏：${pnlStr}</div>` : ''}
+          <div class="stock-price">
+            <div class="stock-change ${isUp?'up':'down'}" style="font-size:15px">${price.toFixed(3)}</div>
+            <div class="stock-pct ${isUp?'up':'down'}">${pctStr}</div>
+          </div>
         </div>
-        <div class="stock-price">
-          <div class="stock-change ${isUp?'up':'down'}" style="font-size:15px">${price.toFixed(3)}</div>
-          <div class="stock-pct ${isUp?'up':'down'}">${pctStr}</div>
+        <div style="display:flex;gap:8px">
+          <a href="${thsLink}" style="flex:1;background:linear-gradient(135deg,#ff7a18,#ff5500);color:#fff;text-align:center;padding:9px 0;border-radius:20px;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 2px 8px rgba(255,85,0,0.3)" onclick="return openThs(event,'${thsLink}','${thsWebLink}')">
+            📈 打开同花顺
+          </a>
+          <a href="${thsWebLink}" target="_blank" style="flex:0 0 auto;background:#f5f5f5;color:#666;padding:9px 14px;border-radius:20px;font-size:13px;text-decoration:none">
+            网页
+          </a>
         </div>
       </div>
     `;
   }).join('');
+}
+
+// 同花顺跳转处理：先尝试App协议，失败则降级网页
+function openThs(e, appLink, webLink){
+  e.preventDefault();
+  // 记录点击时间
+  const t = Date.now();
+  // 尝试打开App
+  window.location.href = appLink;
+  // 1.2秒后如果还在页面（说明App没打开），降级到网页版
+  setTimeout(()=>{
+    if(Date.now() - t < 1500){
+      // App未安装或未响应，跳网页版
+      window.open(webLink, '_blank');
+    }
+  }, 1200);
+  return false;
 }
 
 document.getElementById('refreshWatch').addEventListener('click', fetchWatchList);
