@@ -2323,13 +2323,14 @@ function renderStock(){
 
 // ===== 自选股监控 =====
 const WATCH_LIST = [
-  {code:'512480', name:'半导体ETF', market:'1', buyPrice:1.124, shares:2600, cost:2922.4, note:'推荐买入'},
+  {code:'512480', name:'半导体ETF', market:'1', buyPrice:1.094, shares:2900, cost:3172.6, note:'今日9:30抄底买入·已成交'},
   {code:'159995', name:'芯片ETF', market:'0', buyPrice:null, shares:0, cost:0, note:'备选'},
   {code:'002384', name:'东山精密', market:'0', buyPrice:null, shares:0, cost:0, note:'潜力股关注'},
   {code:'300750', name:'宁德时代', market:'0', buyPrice:null, shares:0, cost:0, note:'潜力股关注'},
   {code:'600667', name:'太极实业', market:'1', buyPrice:null, shares:0, cost:0, note:'主力流入9.47亿'},
   {code:'000636', name:'风华高科', market:'0', buyPrice:null, shares:0, cost:0, note:'主力流入9.93亿'},
-  {code:'002094', name:'青岛金王', market:'0', buyPrice:9.465, shares:200, cost:1893, note:'当前持仓·亏损中'}
+  {code:'601727', name:'上海电气', market:'1', buyPrice:null, shares:0, cost:0, note:'特高压+核电+储能·大盘蓝筹'},
+  {code:'002094', name:'青岛金王', market:'0', buyPrice:9.465, shares:200, cost:1893, note:'持仓亏损中·等反弹减仓'}
 ];
 
 async function fetchWatchList(){
@@ -2449,12 +2450,13 @@ document.getElementById('refreshWatch').addEventListener('click', fetchWatchList
 
 // 自选股预置数据（API不可用时降级）
 const WATCH_FALLBACK = [
-  {f12:'512480', f14:'半导体ETF', f2:1.124, f3:0.99},
+  {f12:'512480', f14:'半导体ETF', f2:1.094, f3:-2.5},
   {f12:'159995', f14:'芯片ETF', f2:1.245, f3:1.23},
   {f12:'002384', f14:'东山精密', f2:211.90, f3:6.39},
   {f12:'300750', f14:'宁德时代', f2:400.00, f3:4.44},
   {f12:'600667', f14:'太极实业', f2:17.92, f3:10.01},
   {f12:'000636', f14:'风华高科', f2:44.24, f3:10.00},
+  {f12:'601727', f14:'上海电气', f2:6.60, f3:1.23},
   {f12:'002094', f14:'青岛金王', f2:4.35, f3:-0.68}
 ];
 
