@@ -2366,8 +2366,21 @@ function renderWatchList(list){
   el.innerHTML = WATCH_LIST.map(w=>{
     // 从实时数据中找到对应的股票
     const realtime = list.find(s => (s.f12===w.code) || (s.code===w.code));
-    const price = realtime ? (realtime.f2 || realtime.price || 0) : (w.buyPrice || 0);
-    const pct = realtime ? (realtime.f3 || realtime.pct || 0) : 0;
+
+    // 价格标准化：东方财富f2字段可能是原始整数（需/1000）或已格式化浮点数
+    let price = 0;
+    let pct = 0;
+    if(realtime){
+      const rawPrice = realtime.f2 || realtime.price || 0;
+      const rawPct = realtime.f3 || realtime.pct || 0;
+      // 如果f2超过100且小数位为0（如1104,1246,19730），说明是原始值，需除以1000
+      price = normalizePrice(rawPrice, w.code);
+      // 涨跌幅可能是原始整数（需/100）或已格式化（如-2.94）
+      pct = normalizePct(rawPct);
+    }else{
+      price = w.buyPrice || 0;
+    }
+
     const isUp = pct >= 0;
     const pctStr = (isUp?'+':'') + pct.toFixed(2) + '%';
 
@@ -2447,6 +2460,36 @@ function openThs(e, appLink, webLink){
 }
 
 document.getElementById('refreshWatch').addEventListener('click', fetchWatchList);
+
+// 价格标准化：东方财富不同接口返回格式不一致
+function normalizePrice(raw, code){
+  const val = parseFloat(raw);
+  if(isNaN(val)) return 0;
+  // 判断是否为原始放大值：
+  // 1. 整数形式
+  // 2. 数值明显超过合理价格范围（ETF>500, 个股>10000）
+  // 东方财富f2通常是分×10，即真实价格×1000
+  const isInteger = Number.isInteger(val);
+  const isETF = /^5\d{5}$/.test(code) || /^15\d{5}$/.test(code) || /^5\d{4}$/.test(code) || /^1\d{5}$/.test(code);
+  if(isETF && isInteger && val > 500){
+    return val / 1000;
+  }
+  if(!isETF && isInteger && val > 10000){
+    return val / 1000;
+  }
+  return val;
+}
+
+// 涨跌幅标准化
+function normalizePct(raw){
+  const val = parseFloat(raw);
+  if(isNaN(val)) return 0;
+  // 东方财富f3可能是原始整数（如-294表示-2.94%）或已格式化（如-2.94）
+  if(Math.abs(val) > 100){
+    return val / 100;
+  }
+  return val;
+}
 
 // 自选股预置数据（API不可用时降级）
 const WATCH_FALLBACK = [
